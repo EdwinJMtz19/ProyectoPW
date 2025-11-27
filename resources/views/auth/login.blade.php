@@ -25,22 +25,6 @@
             </a>
         </div>
         
-        <!-- Radio buttons para tipo de usuario -->
-        <div class="flex justify-center gap-4 mb-6">
-            <div class="flex items-center">
-                <input type="radio" id="estudiante" name="user_type" value="estudiante" checked class="w-4 h-4 text-blue-600">
-                <label for="estudiante" class="ml-2 text-sm text-gray-700">Estudiante</label>
-            </div>
-            <div class="flex items-center">
-                <input type="radio" id="docente" name="user_type" value="docente" class="w-4 h-4 text-blue-600">
-                <label for="docente" class="ml-2 text-sm text-gray-700">Docente</label>
-            </div>
-            <div class="flex items-center">
-                <input type="radio" id="admin" name="user_type" value="admin" class="w-4 h-4 text-blue-600">
-                <label for="admin" class="ml-2 text-sm text-gray-700">Admin</label>
-            </div>
-        </div>
-        
         <!-- Formulario -->
         <form method="POST" action="{{ route('login') }}">
             @csrf
@@ -62,7 +46,7 @@
                     >
                     <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </div>
                 </div>
@@ -95,8 +79,19 @@
                 @enderror
             </div>
             
-            <!-- Olvidé mi contraseña -->
-            <div class="text-right mb-6">
+            <!-- Recordarme y Olvidé mi contraseña -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <input 
+                        type="checkbox" 
+                        id="remember" 
+                        name="remember" 
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    >
+                    <label for="remember" class="ml-2 text-sm text-gray-600">
+                        Recordarme
+                    </label>
+                </div>
                 <a href="{{ route('password.request') }}" class="text-sm text-gray-600 hover:text-gray-800">
                     Olvidé mi contraseña
                 </a>

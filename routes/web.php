@@ -24,20 +24,49 @@ Route::get('/password/reset', function () {
 
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth')->group(function () {
+    // Dashboard general
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
     
-    // Cambia la línea del dashboard de estudiante por:
-Route::get('/estudiante/dashboard', function () {
-    return view('estudiante.dashboard');
-})->name('estudiante.dashboard')->middleware('auth');
+    // Rutas de Estudiante
+    Route::prefix('estudiante')->name('estudiante.')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('estudiante.dashboard');
+        })->name('dashboard');
+        
+        Route::get('/eventos', function () {
+            return view('estudiante.eventos');
+        })->name('eventos');
+        
+        Route::get('/evento/{id}', function ($id) {
+            return view('estudiante.evento-detalle', compact('id'));
+        })->name('evento.detalle');
+        
+        Route::get('/mi-equipo', function () {
+            return view('estudiante.mi-equipo');
+        })->name('mi-equipo');
+        
+        Route::get('/mi-progreso', function () {
+            return view('estudiante.mi-progreso');
+        })->name('mi-progreso');
+        
+        Route::get('/constancias', function () {
+            return view('estudiante.constancias');
+        })->name('constancias');
+    });
     
-    Route::get('/docente/dashboard', function () {
-        return view('docente.dashboard');
-    })->name('docente.dashboard');
+    // Rutas de Docente
+    Route::prefix('docente')->name('docente.')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('docente.dashboard');
+        })->name('dashboard');
+    });
     
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    // Rutas de Admin
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+    });
 });

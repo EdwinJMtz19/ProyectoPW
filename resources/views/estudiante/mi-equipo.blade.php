@@ -1,0 +1,18 @@
+@extends('layouts.dashboard')
+
+@section('title', 'Mi Equipo - EventTecNM')
+
+@section('content')
+<div class="p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Mi Equipo</h1>
+    <p class="text-gray-600 mb-8">Gestiona tu equipo y colabora con tus compañeros</p>
+    
+    <div class="bg-white rounded-2xl p-12 shadow-sm border border-gray-200 text-center">
+        <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Sección en construcción</h2>
+        <p class="text-gray-600">Pronto podrás gestionar tu equipo aquí</p>
+    </div>
+</div>
+@endsection

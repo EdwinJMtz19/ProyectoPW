@@ -47,6 +47,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Obtener el nombre del campo usado para autenticación
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'numero_control';
+    }
+
+    /**
      * Verificar si el usuario es administrador
      */
     public function isAdmin()

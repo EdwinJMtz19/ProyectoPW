@@ -33,6 +33,7 @@ class RegisterController extends Controller
             'user_type' => ['required', 'in:estudiante,docente,admin'],
         ], [
             'name.required' => 'El nombre es obligatorio.',
+            'name.max' => 'El nombre no debe exceder 255 caracteres.',
             'email.required' => 'El correo electrónico es obligatorio.',
             'email.email' => 'Debe proporcionar un correo electrónico válido.',
             'email.unique' => 'Este correo electrónico ya está registrado.',
@@ -41,6 +42,8 @@ class RegisterController extends Controller
             'password.required' => 'La contraseña es obligatoria.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'user_type.required' => 'Debe seleccionar un tipo de usuario.',
+            'user_type.in' => 'El tipo de usuario seleccionado no es válido.',
         ]);
 
         // Crear el usuario

@@ -25,25 +25,28 @@
             </button>
         </div>
         
-        <!-- Radio buttons para tipo de usuario -->
-        <div class="flex justify-center gap-4 mb-6">
-            <div class="flex items-center">
-                <input type="radio" id="estudiante_reg" name="user_type" value="estudiante" checked class="w-4 h-4 text-blue-600">
-                <label for="estudiante_reg" class="ml-2 text-sm text-gray-700">Estudiante</label>
-            </div>
-            <div class="flex items-center">
-                <input type="radio" id="docente_reg" name="user_type" value="docente" class="w-4 h-4 text-blue-600">
-                <label for="docente_reg" class="ml-2 text-sm text-gray-700">Docente</label>
-            </div>
-            <div class="flex items-center">
-                <input type="radio" id="admin_reg" name="user_type" value="admin" class="w-4 h-4 text-blue-600">
-                <label for="admin_reg" class="ml-2 text-sm text-gray-700">Admin</label>
-            </div>
-        </div>
-        
         <!-- Formulario -->
-        <form method="POST" action="{{ route('register') }}">
+        <form method="POST" action="{{ route('register') }}" id="registerForm">
             @csrf
+            
+            <!-- Radio buttons para tipo de usuario -->
+            <div class="flex justify-center gap-4 mb-6">
+                <div class="flex items-center">
+                    <input type="radio" id="estudiante_reg" name="user_type" value="estudiante" checked class="w-4 h-4 text-blue-600" required>
+                    <label for="estudiante_reg" class="ml-2 text-sm text-gray-700">Estudiante</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="radio" id="docente_reg" name="user_type" value="docente" class="w-4 h-4 text-blue-600">
+                    <label for="docente_reg" class="ml-2 text-sm text-gray-700">Docente</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="radio" id="admin_reg" name="user_type" value="admin" class="w-4 h-4 text-blue-600">
+                    <label for="admin_reg" class="ml-2 text-sm text-gray-700">Admin</label>
+                </div>
+            </div>
+            @error('user_type')
+                <p class="mb-4 text-sm text-red-600 text-center">{{ $message }}</p>
+            @enderror
             
             <!-- Nombre completo -->
             <div class="mb-6">

@@ -23,10 +23,16 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         // Validar los datos del formulario
-        $credentials = $request->validate([
+        $request->validate([
             'numero_control' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
+
+        // Preparar las credenciales para autenticación
+        $credentials = [
+            'numero_control' => $request->numero_control,
+            'password' => $request->password,
+        ];
 
         // Intentar autenticar al usuario
         if (Auth::attempt($credentials, $request->filled('remember'))) {
@@ -39,9 +45,9 @@ class LoginController extends Controller
         }
 
         // Si falla la autenticación
-        throw ValidationException::withMessages([
-            'numero_control' => ['Las credenciales proporcionadas no coinciden con nuestros registros.'],
-        ]);
+        return back()->withErrors([
+            'numero_control' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
+        ])->withInput($request->only('numero_control'));
     }
 
     /**

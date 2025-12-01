@@ -29,24 +29,18 @@
         <form method="POST" action="{{ route('register') }}" id="registerForm">
             @csrf
             
-            <!-- Radio buttons para tipo de usuario -->
-            <div class="flex justify-center gap-4 mb-6">
-                <div class="flex items-center">
-                    <input type="radio" id="estudiante_reg" name="user_type" value="estudiante" checked class="w-4 h-4 text-blue-600" required>
-                    <label for="estudiante_reg" class="ml-2 text-sm text-gray-700">Estudiante</label>
-                </div>
-                <div class="flex items-center">
-                    <input type="radio" id="docente_reg" name="user_type" value="docente" class="w-4 h-4 text-blue-600">
-                    <label for="docente_reg" class="ml-2 text-sm text-gray-700">Docente</label>
-                </div>
-                <div class="flex items-center">
-                    <input type="radio" id="admin_reg" name="user_type" value="admin" class="w-4 h-4 text-blue-600">
-                    <label for="admin_reg" class="ml-2 text-sm text-gray-700">Admin</label>
+            <!-- Campo oculto para tipo de usuario (solo estudiante) -->
+            <input type="hidden" name="user_type" value="estudiante">
+            
+            <!-- Indicador visual de tipo de registro -->
+            <div class="flex justify-center mb-6">
+                <div class="flex items-center bg-blue-50 px-6 py-3 rounded-full border border-blue-200">
+                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="text-sm font-medium text-blue-700">Registro como Estudiante</span>
                 </div>
             </div>
-            @error('user_type')
-                <p class="mb-4 text-sm text-red-600 text-center">{{ $message }}</p>
-            @enderror
             
             <!-- Nombre completo -->
             <div class="mb-6">

@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Estudiante - EventTecNM</title>
+    <title>Dashboard Maestro - EventTecNM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Navbar -->
-    <nav class="bg-blue-600 text-white shadow-lg">
+    <nav class="bg-green-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold">EventTecNM</h1>
-                <p class="text-sm opacity-90">Portal del Estudiante</p>
+                <p class="text-sm opacity-90">Portal del Maestro (Asesor)</p>
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right">
@@ -37,8 +37,8 @@
                 ¡Bienvenido, {{ auth()->user()->name }}!
             </h2>
             <p class="text-gray-600">
-                Rol: <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                    👨‍🎓 Estudiante
+                Rol: <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                    👨‍🏫 Maestro (Asesor)
                 </span>
             </p>
         </div>
@@ -48,45 +48,45 @@
             <!-- Tarjeta 1 -->
             <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-gray-800">Mis Eventos</h3>
-                    <span class="text-3xl">📅</span>
+                    <h3 class="text-xl font-bold text-gray-800">Mis Equipos</h3>
+                    <span class="text-3xl">👥</span>
                 </div>
-                <p class="text-gray-600 mb-4">Gestiona tus inscripciones a eventos</p>
-                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition">
-                    Ver Eventos
+                <p class="text-gray-600 mb-4">Gestiona los equipos que asesoras</p>
+                <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition">
+                    Ver Equipos
                 </button>
             </div>
 
             <!-- Tarjeta 2 -->
             <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-gray-800">Mi Equipo</h3>
-                    <span class="text-3xl">👥</span>
+                    <h3 class="text-xl font-bold text-gray-800">Eventos</h3>
+                    <span class="text-3xl">📅</span>
                 </div>
-                <p class="text-gray-600 mb-4">Administra tu equipo de trabajo</p>
-                <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition">
-                    Ver Equipo
+                <p class="text-gray-600 mb-4">Consulta eventos disponibles</p>
+                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition">
+                    Ver Eventos
                 </button>
             </div>
 
             <!-- Tarjeta 3 -->
             <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-gray-800">Constancias</h3>
-                    <span class="text-3xl">📜</span>
+                    <h3 class="text-xl font-bold text-gray-800">Proyectos</h3>
+                    <span class="text-3xl">📊</span>
                 </div>
-                <p class="text-gray-600 mb-4">Descarga tus constancias</p>
+                <p class="text-gray-600 mb-4">Revisa proyectos de tus equipos</p>
                 <button class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded-lg transition">
-                    Ver Constancias
+                    Ver Proyectos
                 </button>
             </div>
         </div>
 
         <!-- Información adicional -->
-        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 class="text-lg font-bold text-blue-800 mb-2">📌 Información Importante</h3>
-            <p class="text-blue-700">
-                Bienvenido al sistema EventTecNM. Aquí podrás gestionar tu participación en eventos académicos.
+        <div class="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 class="text-lg font-bold text-green-800 mb-2">📌 Panel del Asesor</h3>
+            <p class="text-green-700">
+                Como asesor, puedes guiar y monitorear el progreso de los equipos estudiantiles en sus proyectos.
             </p>
         </div>
     </div>

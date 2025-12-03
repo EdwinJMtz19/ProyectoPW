@@ -5,17 +5,9 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Rankings</h1>
-            <p class="text-gray-600 text-lg">Clasificaciones y resultados de eventos</p>
-        </div>
-        <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            Exportar Resultados
-        </button>
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Rankings</h1>
+        <p class="text-gray-600 text-lg">Clasificaciones y resultados de eventos</p>
     </div>
 
     <!-- Selector de Evento -->
@@ -120,7 +112,7 @@
 
         <!-- Tabla de Clasificación Completa -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-200">
+            <div class="p-6 border-b border-gray-100">
                 <h2 class="text-xl font-bold text-gray-900">Tabla de Clasificación Completa</h2>
                 <p class="text-sm text-gray-600">{{ $proyectosRanking->count() }} equipos participaron en {{ $eventoSeleccionado->title }}</p>
             </div>
@@ -147,7 +139,16 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="ranking-tbody">
                         @foreach($proyectosRanking as $proyecto)
-                            <tr class="ranking-row hover:bg-gray-50 transition-colors {{ $miProyecto && $miProyecto->id === $proyecto->id ? 'bg-blue-50' : '' }}" 
+                            @php
+                                $esMiProyecto = false;
+                                foreach($proyecto->team->members as $member) {
+                                    if($member->id === auth()->id()) {
+                                        $esMiProyecto = true;
+                                        break;
+                                    }
+                                }
+                            @endphp
+                            <tr class="ranking-row hover:bg-gray-50 transition-colors {{ $esMiProyecto ? 'bg-blue-50' : '' }}" 
                                 data-search="{{ strtolower($proyecto->team->name . ' ' . $proyecto->title) }}">
                                 <!-- Posición -->
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -211,10 +212,14 @@
 
                                 <!-- Acciones -->
                                 <td class="px-6 py-4 text-right">
-                                    <a href="{{ route('estudiante.proyectos.show', $proyecto->id) }}" 
-                                       class="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                                        Ver Detalles
-                                    </a>
+                                    @if($esMiProyecto)
+                                        <a href="{{ route('estudiante.proyectos.show', $proyecto->id) }}" 
+                                           class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                                            Ver Detalles
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 text-sm">-</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

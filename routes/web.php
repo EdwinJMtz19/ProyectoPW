@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
         // Equipos
         Route::get('/equipos', [EquipoController::class, 'index'])->name('equipos');
         Route::post('/equipos', [EquipoController::class, 'store'])->name('equipos.store');
+        Route::post('/equipos/join', [EquipoController::class, 'join'])->name('equipos.join');
         Route::get('/equipos/{id}', [EquipoController::class, 'show'])->name('equipos.show');
         Route::delete('/equipos/{id}/leave', [EquipoController::class, 'leave'])->name('equipos.leave');
         

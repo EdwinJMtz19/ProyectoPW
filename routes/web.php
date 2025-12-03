@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Estudiante\DashboardController;
 use App\Http\Controllers\Estudiante\EventoController;
 use App\Http\Controllers\Estudiante\EquipoController;
+use App\Http\Controllers\Estudiante\ProyectoController;
+use App\Http\Controllers\Estudiante\RankingController;
 use App\Http\Controllers\AsesorController;
 use App\Http\Controllers\AdminController;
 
@@ -54,14 +56,14 @@ Route::middleware('auth')->group(function () {
         Route::delete('/equipos/{id}/leave', [EquipoController::class, 'leave'])->name('equipos.leave');
         
         // Proyectos
-        Route::get('/proyectos', function () {
-            return view('estudiante.mi-progreso');
-        })->name('proyectos');
+        Route::get('/proyectos', [ProyectoController::class, 'index'])->name('proyectos');
+        Route::post('/proyectos', [ProyectoController::class, 'store'])->name('proyectos.store');
+        Route::get('/proyectos/{id}', [ProyectoController::class, 'show'])->name('proyectos.show');
+        Route::put('/proyectos/{id}', [ProyectoController::class, 'update'])->name('proyectos.update');
+        Route::delete('/proyectos/{id}', [ProyectoController::class, 'destroy'])->name('proyectos.destroy');
         
         // Rankings
-        Route::get('/rankings', function () {
-            return view('estudiante.dashboard');
-        })->name('rankings');
+        Route::get('/rankings', [RankingController::class, 'index'])->name('rankings');
         
         // Perfil
         Route::get('/perfil', function () {

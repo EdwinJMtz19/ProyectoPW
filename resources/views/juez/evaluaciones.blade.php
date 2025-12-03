@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Encabezado -->
+    <!-- Encabezadoaaa -->
     <div class="mb-8">
         <h1 class="text-4xl font-bold text-gray-900">Mis Evaluaciones</h1>
         <p class="text-gray-600 mt-2 text-lg">Revisa y gestiona todas las evaluaciones realizadas.</p>

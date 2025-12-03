@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\AsesorController;
+use App\Http\Controllers\AdminController;
 
 // Redirigir raíz al login
 Route::get('/', function () {
@@ -34,7 +35,7 @@ Route::middleware('auth')->group(function () {
     // ==========================================
     // RUTAS DE ESTUDIANTE
     // ==========================================
-    Route::prefix('estudiante')->name('estudiante.')->group(function () {
+    Route::prefix('estudiante')->name('estudiante.')->middleware('estudiante')->group(function () {
         Route::get('/dashboard', function () {
             return view('estudiante.dashboard');
         })->name('dashboard');
@@ -72,7 +73,7 @@ Route::middleware('auth')->group(function () {
     // ==========================================
     // RUTAS DE ASESOR (MAESTRO)
     // ==========================================
-    Route::prefix('asesor')->name('asesor.')->group(function () {
+    Route::prefix('asesor')->name('asesor.')->middleware('asesor')->group(function () {
         Route::get('/dashboard', [AsesorController::class, 'dashboard'])->name('dashboard');
         Route::get('/eventos', [AsesorController::class, 'eventos'])->name('eventos');
         Route::get('/evento/{id}', [AsesorController::class, 'eventoDetalle'])->name('evento-detalle');
@@ -85,7 +86,7 @@ Route::middleware('auth')->group(function () {
     // ==========================================
     // RUTAS DE JUEZ
     // ==========================================
-    Route::prefix('juez')->name('juez.')->group(function () {
+    Route::prefix('juez')->name('juez.')->middleware('juez')->group(function () {
         Route::get('/dashboard', function () {
             return view('juez.dashboard');
         })->name('dashboard');
@@ -117,12 +118,15 @@ Route::middleware('auth')->group(function () {
     });
     
     // ==========================================
-    // RUTAS DE ADMIN
+    // RUTAS DE ADMIN (Protegidas con middleware)
     // ==========================================
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+    Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/eventos', [AdminController::class, 'eventos'])->name('eventos');
+        Route::get('/equipos', [AdminController::class, 'equipos'])->name('equipos');
+        Route::get('/rankings', [AdminController::class, 'rankings'])->name('rankings');
+        Route::get('/administracion', [AdminController::class, 'administracion'])->name('administracion');
+        Route::get('/perfil', [AdminController::class, 'perfil'])->name('perfil');
     });
     
 });

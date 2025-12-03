@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Encabezadoaaa -->
+    <!-- Encabezado -->
     <div class="mb-8">
         <h1 class="text-4xl font-bold text-gray-900">Mis Evaluaciones</h1>
         <p class="text-gray-600 mt-2 text-lg">Revisa y gestiona todas las evaluaciones realizadas.</p>
@@ -17,7 +17,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-indigo-100 text-sm font-medium mb-1">Pendientes</p>
-                    <p class="text-4xl font-bold">1</p>
+                    <p class="text-4xl font-bold">{{ $pendingCount }}</p>
                 </div>
                 <div class="bg-white/20 p-3 rounded-xl">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,7 +31,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-green-100 text-sm font-medium mb-1">Completadas</p>
-                    <p class="text-4xl font-bold">18</p>
+                    <p class="text-4xl font-bold">{{ $completedCount }}</p>
                 </div>
                 <div class="bg-white/20 p-3 rounded-xl">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-purple-100 text-sm font-medium mb-1">Promedio</p>
-                    <p class="text-4xl font-bold">85.2%</p>
+                    <p class="text-4xl font-bold">{{ number_format($averageScore, 1) }}%</p>
                 </div>
                 <div class="bg-white/20 p-3 rounded-xl">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,175 +60,175 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div class="border-b border-gray-200">
             <nav class="flex -mb-px">
-                <button class="px-8 py-4 text-sm font-semibold text-indigo-600 border-b-2 border-indigo-600">
+                <a href="{{ route('juez.evaluaciones', ['filter' => 'pending']) }}" 
+                   class="px-8 py-4 text-sm font-semibold {{ $filter === 'pending' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                     Pendientes
-                </button>
-                <button class="px-8 py-4 text-sm font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300">
+                </a>
+                <a href="{{ route('juez.evaluaciones', ['filter' => 'completed']) }}" 
+                   class="px-8 py-4 text-sm font-semibold {{ $filter === 'completed' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                     Completadas
-                </button>
-                <button class="px-8 py-4 text-sm font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300">
+                </a>
+                <a href="{{ route('juez.evaluaciones', ['filter' => 'all']) }}" 
+                   class="px-8 py-4 text-sm font-semibold {{ $filter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300' }}">
                     Todas
-                </button>
+                </a>
             </nav>
         </div>
     </div>
 
-    <!-- Lista de Evaluaciones -->
-    <div class="space-y-6">
-        <!-- Evaluación Pendiente -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-            <div class="p-6">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <h3 class="text-xl font-bold text-gray-900">EcoTrack - Monitoreo Ambiental Inteligente</h3>
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">Pendiente</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-1">
-                            <span class="font-medium">Equipo:</span> Tech Innovators
-                        </p>
-                        <p class="text-sm text-gray-600">
-                            <span class="font-medium">Evento:</span> Hackathon Innovación 2024
-                        </p>
-                    </div>
-                    <a href="{{ route('juez.evaluar-proyecto', 1) }}" 
-                       class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg">
-                        Evaluar ahora
-                    </a>
-                </div>
+    @if($evaluations->isEmpty())
+        <div class="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
+            <svg class="w-20 h-20 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                @if($filter === 'pending')
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                @else
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                @endif
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                @if($filter === 'pending')
+                    ¡Excelente! No hay evaluaciones pendientes
+                @else
+                    No hay evaluaciones {{ $filter === 'completed' ? 'completadas' : '' }}
+                @endif
+            </h3>
+            <p class="text-gray-600">
+                @if($filter === 'pending')
+                    Has completado todas tus evaluaciones asignadas.
+                @else
+                    No se encontraron evaluaciones en esta categoría.
+                @endif
+            </p>
+        </div>
+    @else
+        <!-- Lista de Evaluaciones -->
+        <div class="space-y-6">
+            @foreach($evaluations as $item)
+                @if($isPending)
+                    @php
+                        $project = $item;
+                        $event = $project->event;
+                        $team = $project->team;
+                        $leader = $team->leader;
+                    @endphp
+                    
+                    <!-- Evaluación Pendiente -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h3 class="text-xl font-bold text-gray-900">{{ $project->title }}</h3>
+                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">Pendiente</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Equipo:</span> {{ $team->name }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Evento:</span> {{ $event->title }}
+                                    </p>
+                                    @if($project->description)
+                                        <p class="text-sm text-gray-500 mt-2 line-clamp-2">{{ Str::limit($project->description, 120) }}</p>
+                                    @endif
+                                </div>
+                                <a href="{{ route('juez.evaluar-proyecto', $project->id) }}" 
+                                   class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg whitespace-nowrap">
+                                    Evaluar ahora
+                                </a>
+                            </div>
 
-                <div class="flex items-center gap-6 text-sm text-gray-600 border-t border-gray-100 pt-4 mt-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        <span>Fecha límite: <span class="font-semibold text-gray-900">16 Abr 2024</span></span>
+                            <div class="flex items-center gap-6 text-sm text-gray-600 border-t border-gray-100 pt-4 mt-4">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span>Fecha límite: <span class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($event->event_end_date)->format('d M Y') }}</span></span>
+                                </div>
+                                @if($project->submitted_at)
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span>Entregado: <span class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($project->submitted_at)->format('d M Y') }}</span></span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>Tiempo estimado: <span class="font-semibold text-gray-900">30 min</span></span>
+                @else
+                    @php
+                        $evaluation = $item;
+                        $project = $evaluation->project;
+                        $event = $project->event;
+                        $team = $project->team;
+                        
+                        // Obtener calificaciones por criterio
+                        $criteriaScores = $evaluation->scores->mapWithKeys(function($score) {
+                            return [$score->criterion->name => $score->score];
+                        });
+                    @endphp
+                    
+                    <!-- Evaluación Completada -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h3 class="text-xl font-bold text-gray-900">{{ $project->title }}</h3>
+                                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Completada</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Equipo:</span> {{ $team->name }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Evento:</span> {{ $event->title }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-600 mb-1">Calificación</p>
+                                    <p class="text-3xl font-bold text-green-600">{{ number_format($evaluation->total_score, 1) }}/100</p>
+                                </div>
+                            </div>
+
+                            @if($criteriaScores->isNotEmpty())
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    @foreach($criteriaScores as $criterionName => $score)
+                                        <div class="text-center p-3 bg-gray-50 rounded-xl">
+                                            <p class="text-xs text-gray-600 mb-1">{{ $criterionName }}</p>
+                                            <p class="text-lg font-bold text-gray-900">{{ number_format($score, 0) }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($evaluation->comments)
+                                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <p class="text-xs text-gray-600 font-medium mb-1">Comentarios:</p>
+                                    <p class="text-sm text-gray-700">{{ Str::limit($evaluation->comments, 200) }}</p>
+                                </div>
+                            @endif
+
+                            <div class="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-4 mt-4">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span>Evaluada el: <span class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($evaluation->completed_at)->format('d M Y') }}</span></span>
+                                </div>
+                                <span class="text-xs text-gray-500">
+                                    Tiempo: {{ \Carbon\Carbon::parse($evaluation->started_at)->diffInMinutes(\Carbon\Carbon::parse($evaluation->completed_at)) }} min
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                @endif
+            @endforeach
         </div>
 
-        <!-- Evaluación Completada 1 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <h3 class="text-xl font-bold text-gray-900">SmartFarm - Agricultura Automatizada</h3>
-                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Completada</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-1">
-                            <span class="font-medium">Equipo:</span> AgroTech Solutions
-                        </p>
-                        <p class="text-sm text-gray-600">
-                            <span class="font-medium">Evento:</span> Concurso de Robótica
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-600 mb-1">Calificación</p>
-                        <p class="text-3xl font-bold text-green-600">88/100</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-4 gap-4 mb-4">
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Innovación</p>
-                        <p class="text-lg font-bold text-gray-900">85</p>
-                    </div>
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Viabilidad</p>
-                        <p class="text-lg font-bold text-gray-900">90</p>
-                    </div>
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Presentación</p>
-                        <p class="text-lg font-bold text-gray-900">88</p>
-                    </div>
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Impacto</p>
-                        <p class="text-lg font-bold text-gray-900">90</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-6 text-sm text-gray-600 border-t border-gray-100 pt-4 mt-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        <span>Evaluada el: <span class="font-semibold text-gray-900">10 Abr 2024</span></span>
-                    </div>
-                    <button class="ml-auto text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-2">
-                        Ver detalles
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+        <!-- Paginación -->
+        <div class="mt-8">
+            {{ $evaluations->links() }}
         </div>
-
-        <!-- Evaluación Completada 2 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <h3 class="text-xl font-bold text-gray-900">HealthAI - Diagnóstico Inteligente</h3>
-                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Completada</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-1">
-                            <span class="font-medium">Equipo:</span> MedTech Innovators
-                        </p>
-                        <p class="text-sm text-gray-600">
-                            <span class="font-medium">Evento:</span> Hackathon Innovación 2024
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-600 mb-1">Calificación</p>
-                        <p class="text-3xl font-bold text-green-600">92/100</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-4 gap-4 mb-4">
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Innovación</p>
-                        <p class="text-lg font-bold text-gray-900">95</p>
-                    </div>
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Viabilidad</p>
-                        <p class="text-lg font-bold text-gray-900">90</p>
-                    </div>
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Presentación</p>
-                        <p class="text-lg font-bold text-gray-900">88</p>
-                    </div>
-                    <div class="text-center p-3 bg-gray-50 rounded-xl">
-                        <p class="text-xs text-gray-600 mb-1">Impacto</p>
-                        <p class="text-lg font-bold text-gray-900">95</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-6 text-sm text-gray-600 border-t border-gray-100 pt-4 mt-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        <span>Evaluada el: <span class="font-semibold text-gray-900">15 Abr 2024</span></span>
-                    </div>
-                    <button class="ml-auto text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-2">
-                        Ver detalles
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @endif
 </div>
 @endsection

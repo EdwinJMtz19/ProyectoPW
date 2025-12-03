@@ -79,6 +79,24 @@ class User extends Authenticatable
                     ->withPivot('earned_at');
     }
 
+    /**
+     * Relación con los eventos donde es juez
+     */
+    public function assignedEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_judges', 'judge_id', 'event_id')
+            ->withPivot('status', 'assigned_at', 'assigned_by', 'notes')
+            ->withTimestamps();
+    }
+
+    /**
+     * Relación con las asignaciones como juez
+     */
+    public function judgeAssignments()
+    {
+        return $this->hasMany(EventJudge::class, 'judge_id');
+    }
+
     // Verificadores de rol
     public function isAdmin()
     {

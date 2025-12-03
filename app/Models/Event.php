@@ -94,6 +94,24 @@ class Event extends Model
         return $this->hasMany(EventSchedule::class)->orderBy('day')->orderBy('order_index');
     }
 
+    /**
+     * Relación con los jueces asignados al evento
+     */
+    public function judges()
+    {
+        return $this->belongsToMany(User::class, 'event_judges', 'event_id', 'judge_id')
+            ->withPivot('status', 'assigned_at', 'assigned_by', 'notes')
+            ->withTimestamps();
+    }
+
+    /**
+     * Relación con las asignaciones de jueces
+     */
+    public function judgeAssignments()
+    {
+        return $this->hasMany(EventJudge::class, 'event_id');
+    }
+
     // Scopes
     public function scopePublished($query)
     {

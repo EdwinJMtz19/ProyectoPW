@@ -8,6 +8,7 @@ use App\Http\Controllers\Estudiante\EventoController;
 use App\Http\Controllers\Estudiante\EquipoController;
 use App\Http\Controllers\AsesorController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Juez\JuezDashboardController;
 
 // Redirigir raíz al login
 Route::get('/', function () {
@@ -86,33 +87,23 @@ Route::middleware('auth')->group(function () {
     // RUTAS DE JUEZ
     // ==========================================
     Route::prefix('juez')->name('juez.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('juez.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [JuezDashboardController::class, 'dashboard'])->name('dashboard');
         
-        Route::get('/eventos', function () {
-            return view('juez.eventos');
-        })->name('eventos');
+        Route::get('/eventos', [JuezDashboardController::class, 'eventos'])->name('eventos');
         
-        Route::get('/evaluaciones', function () {
-            return view('juez.evaluaciones');
-        })->name('evaluaciones');
+        Route::get('/evaluaciones', [JuezDashboardController::class, 'evaluaciones'])->name('evaluaciones');
         
-        Route::get('/evaluaciones/{id}', function ($id) {
-            return view('juez.evaluar-proyecto', ['id' => $id]);
-        })->name('evaluar-proyecto');
+        Route::get('/evaluaciones/{id}', [JuezDashboardController::class, 'evaluarProyecto'])->name('evaluar-proyecto');
         
-        Route::post('/evaluaciones/{id}', function ($id) {
-            return redirect()->route('juez.evaluaciones')->with('success', 'Evaluación guardada exitosamente');
-        })->name('guardar-evaluacion');
+        Route::post('/evaluaciones/{id}', [JuezDashboardController::class, 'guardarEvaluacion'])->name('guardar-evaluacion');
         
-        Route::get('/rankings', function () {
-            return view('juez.rankings');
-        })->name('rankings');
+        Route::get('/rankings', [JuezDashboardController::class, 'rankings'])->name('rankings');
         
-        Route::get('/perfil', function () {
-            return view('juez.perfil');
-        })->name('perfil');
+        Route::get('/perfil', [JuezDashboardController::class, 'perfil'])->name('perfil');
+        
+        Route::put('/perfil', [JuezDashboardController::class, 'updatePerfil'])->name('update-perfil');
+        
+        Route::put('/perfil/password', [JuezDashboardController::class, 'updatePassword'])->name('update-password');
     });
     
     // ==========================================

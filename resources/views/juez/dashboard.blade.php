@@ -18,7 +18,7 @@
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Pendientes de Evaluar</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">1</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $pendingEvaluations }}</p>
                 </div>
                 <div class="bg-indigo-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Evaluaciones Completadas</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">1</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $completedEvaluations }}</p>
                 </div>
                 <div class="bg-green-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Eventos Asignados</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">4</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $assignedEvents }}</p>
                 </div>
                 <div class="bg-blue-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Promedio Otorgado</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">85.2%</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ number_format($averageScore, 1) }}%</p>
                 </div>
                 <div class="bg-purple-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,18 +83,45 @@
                     <h2 class="text-2xl font-bold text-gray-900">Proyectos por Evaluar</h2>
                 </div>
 
-                <!-- Proyecto -->
-                <div class="p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">EcoTrack - Monitoreo Ambiental Inteligente</h3>
-                            <p class="text-sm text-gray-600 mb-3">Tech Innovators</p>
-                        </div>
-                        <button class="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg">
-                            Evaluar
-                        </button>
+                @if($pendingProjects->isEmpty())
+                    <div class="p-8 text-center">
+                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-gray-600 text-lg">No hay proyectos pendientes de evaluar</p>
+                        <p class="text-gray-500 text-sm mt-2">¡Excelente trabajo! Has completado todas tus evaluaciones.</p>
                     </div>
-                </div>
+                @else
+                    <div class="divide-y divide-gray-100">
+                        @foreach($pendingProjects as $project)
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $project->title }}</h3>
+                                    <p class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Equipo:</span> {{ $project->team->name }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Evento:</span> {{ $project->event->title }}
+                                    </p>
+                                </div>
+                                <a href="{{ route('juez.evaluar-proyecto', $project->id) }}" 
+                                   class="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg">
+                                    Evaluar
+                                </a>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    @if($pendingEvaluations > 5)
+                    <div class="p-4 border-t border-gray-100 text-center">
+                        <a href="{{ route('juez.evaluaciones') }}" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">
+                            Ver todos los proyectos pendientes ({{ $pendingEvaluations }})
+                        </a>
+                    </div>
+                    @endif
+                @endif
             </div>
         </div>
 
@@ -103,61 +130,39 @@
             <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
                 <h2 class="text-xl font-bold text-gray-900 mb-6">Promedios por Criterio</h2>
                 
-                <div class="space-y-4">
-                    <!-- Innovación -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700">Innovación</span>
-                            <span class="text-sm font-bold text-indigo-600">85%</span>
+                @if($criteriaAverages->isEmpty())
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p class="text-gray-500 text-sm">Sin datos de criterios</p>
+                    </div>
+                @else
+                    <div class="space-y-4 mb-8">
+                        @foreach($criteriaAverages as $criterionName => $average)
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">{{ $criterionName }}</span>
+                                <span class="text-sm font-bold text-indigo-600">{{ number_format($average, 1) }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: {{ $average }}%"></div>
+                            </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 85%"></div>
-                        </div>
+                        @endforeach
                     </div>
 
-                    <!-- Viabilidad -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700">Viabilidad</span>
-                            <span class="text-sm font-bold text-indigo-600">90%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 90%"></div>
-                        </div>
+                    <!-- Gráfico de Barras -->
+                    <div class="pt-6 border-t border-gray-100">
+                        <canvas id="criteriosChart" class="w-full" height="250"></canvas>
                     </div>
-
-                    <!-- Presentación -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700">Presentación</span>
-                            <span class="text-sm font-bold text-indigo-600">80%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 80%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Impacto -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700">Impacto</span>
-                            <span class="text-sm font-bold text-indigo-600">95%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 95%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico de Barras (simulado con las barras de progreso) -->
-                <div class="mt-8 pt-6 border-t border-gray-100">
-                    <canvas id="criteriosChart" class="w-full" height="250"></canvas>
-                </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
+@if($criteriaAverages->isNotEmpty())
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('criteriosChart');
@@ -165,22 +170,12 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Innovación', 'Viabilidad', 'Presentación', 'Impacto'],
+                labels: @json($criteriaAverages->keys()),
                 datasets: [{
                     label: 'Promedio',
-                    data: [85, 90, 80, 95],
-                    backgroundColor: [
-                        'rgba(99, 102, 241, 0.8)',
-                        'rgba(99, 102, 241, 0.8)',
-                        'rgba(99, 102, 241, 0.8)',
-                        'rgba(99, 102, 241, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(99, 102, 241, 1)',
-                        'rgba(99, 102, 241, 1)',
-                        'rgba(99, 102, 241, 1)',
-                        'rgba(99, 102, 241, 1)'
-                    ],
+                    data: @json($criteriaAverages->values()),
+                    backgroundColor: Array(@json($criteriaAverages->count())).fill('rgba(99, 102, 241, 0.8)'),
+                    borderColor: Array(@json($criteriaAverages->count())).fill('rgba(99, 102, 241, 1)'),
                     borderWidth: 2,
                     borderRadius: 8,
                     barThickness: 30
@@ -228,4 +223,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endif
 @endsection

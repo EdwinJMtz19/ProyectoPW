@@ -31,74 +31,27 @@
         <p class="text-gray-600 mt-1">Explora y participa en concursos académicos</p>
     </div>
 
-    <!-- Barra de búsqueda y filtros -->
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
-        <div class="flex flex-col md:flex-row gap-4">
-            <!-- Buscador -->
-            <div class="flex-1">
-                <div class="relative">
-                    <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text" id="buscarEventos" placeholder="Buscar eventos..." 
-                           class="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent">
-                </div>
-            </div>
-
-            <!-- Filtros -->
-            <div class="flex gap-3">
-                <select class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white">
-                    <option>Todos</option>
-                    <option>Activos</option>
-                    <option>Próximos</option>
-                    <option>Finalizados</option>
-                </select>
-
-                <select class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white">
-                    <option>Todas</option>
-                    <option>Tecnología</option>
-                    <option>Ciencias</option>
-                    <option>Robótica</option>
-                </select>
-
-                <!-- Vista Grid/Lista -->
-                <div class="flex gap-2 border border-gray-300 rounded-lg p-1">
-                    <button class="p-2 rounded bg-black text-white">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M10 3H3v7h7V3zM21 3h-7v7h7V3zM21 14h-7v7h7v-7zM10 14H3v7h7v-7z"/>
-                        </svg>
-                    </button>
-                    <button class="p-2 rounded hover:bg-gray-100">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Tabs de filtros -->
     <div class="flex gap-4 mb-6 border-b border-gray-200">
-        <button class="px-4 py-3 font-semibold text-gray-900 border-b-2 border-gray-900">
+        <button onclick="filtrarEventos('todos')" id="tab-todos" class="px-4 py-3 font-semibold text-gray-900 border-b-2 border-gray-900 transition-colors">
             Todos ({{ $todosCount }})
         </button>
-        <button class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900">
+        <button onclick="filtrarEventos('ongoing')" id="tab-ongoing" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Activos ({{ $activosCount }})
         </button>
-        <button class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900">
+        <button onclick="filtrarEventos('upcoming')" id="tab-upcoming" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Próximos ({{ $proximosCount }})
         </button>
-        <button class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900">
+        <button onclick="filtrarEventos('completed')" id="tab-completed" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Finalizados ({{ $finalizadosCount }})
         </button>
     </div>
 
     <!-- Grid de Eventos -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="eventos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($eventos as $evento)
         <!-- Evento {{ $loop->iteration }} -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden group {{ $evento->status === 'completed' ? 'opacity-90' : '' }}">
+        <div class="evento-card bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden group {{ $evento->status === 'completed' ? 'opacity-90' : '' }}" data-status="{{ $evento->status }}">
             <div class="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 @if($evento->cover_image_url)
                     <img src="{{ $evento->cover_image_url }}" 
@@ -161,7 +114,7 @@
             </div>
         </div>
         @empty
-        <div class="col-span-3 text-center py-16">
+        <div id="no-eventos" class="col-span-3 text-center py-16">
             <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
@@ -170,4 +123,42 @@
         @endforelse
     </div>
 </div>
+
+<script>
+function filtrarEventos(filtro) {
+    // Remover clases activas de todos los tabs
+    document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+        tab.classList.remove('font-semibold', 'text-gray-900', 'border-b-2', 'border-gray-900');
+        tab.classList.add('font-medium', 'text-gray-600');
+    });
+    
+    // Agregar clases activas al tab seleccionado
+    const tabActivo = document.getElementById('tab-' + filtro);
+    if (tabActivo) {
+        tabActivo.classList.add('font-semibold', 'text-gray-900', 'border-b-2', 'border-gray-900');
+        tabActivo.classList.remove('font-medium', 'text-gray-600');
+    }
+    
+    // Filtrar eventos
+    const eventos = document.querySelectorAll('.evento-card');
+    let eventosVisibles = 0;
+    
+    eventos.forEach(evento => {
+        const status = evento.getAttribute('data-status');
+        
+        if (filtro === 'todos' || status === filtro) {
+            evento.style.display = 'block';
+            eventosVisibles++;
+        } else {
+            evento.style.display = 'none';
+        }
+    });
+    
+    // Mostrar mensaje si no hay eventos
+    const noEventos = document.getElementById('no-eventos');
+    if (noEventos) {
+        noEventos.style.display = eventosVisibles === 0 ? 'block' : 'none';
+    }
+}
+</script>
 @endsection

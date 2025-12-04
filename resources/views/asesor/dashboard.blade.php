@@ -38,7 +38,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Equipos Asesorados</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">2</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ $equipos->count() }}</p>
                 </div>
                 <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Proyectos Activos</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">1</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ $proyectos }}</p>
                 </div>
                 <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Eventos Activos</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">1</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ $eventos }}</p>
                 </div>
                 <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Notificaciones</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">2</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ $notificaciones }}</p>
                 </div>
                 <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,42 +94,101 @@
         </div>
     </div>
 
-    <!-- Mis Equipos - Ancho completo -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900 mb-6">Mis Equipos</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Equipo 1 -->
-            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                <div>
-                    <h3 class="font-semibold text-gray-900">Tech Innovators</h3>
-                    <p class="text-sm text-gray-500">3 integrantes</p>
+    <!-- Grid: Mis Equipos + Gráfica -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Mis Equipos - 2/3 del ancho -->
+        <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-200 h-full">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Mis Equipos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @forelse($equipos as $equipo)
+                <!-- Equipo {{ $loop->iteration }} -->
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">{{ $equipo->name }}</h3>
+                        <p class="text-sm text-gray-500">{{ $equipo->members_count }} integrantes</p>
+                    </div>
+                    <a href="{{ route('asesor.equipos') }}" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
+                        Ver
+                    </a>
                 </div>
-                <a href="{{ route('asesor.equipos') }}" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
-                    Ver
-                </a>
+                @empty
+                <div class="col-span-2 text-center py-8 text-gray-500">
+                    <p>No tienes equipos asignados aún</p>
+                </div>
+                @endforelse
             </div>
+        </div>
 
-            <!-- Equipo 2 -->
-            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                <div>
-                    <h3 class="font-semibold text-gray-900">Green Solutions</h3>
-                    <p class="text-sm text-gray-500">2 integrantes</p>
-                </div>
-                <a href="{{ route('asesor.equipos') }}" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
-                    Ver
-                </a>
-            </div>
-
-            <!-- Card para agregar nuevo equipo -->
-            <div class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-gray-400 transition-colors cursor-pointer">
-                <div class="text-center">
-                    <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    <p class="text-sm font-medium text-gray-600">Agregar Equipo</p>
-                </div>
+        <!-- Gráfica de Actividad de Equipos - 1/3 del ancho -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col h-full">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Actividad de Equipos</h2>
+            <div class="flex-grow" style="min-height: 300px;">
+                <canvas id="activityChart"></canvas>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Script para Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        
+        // Datos desde el controlador
+        const labels = @json($activityData['labels']);
+        const data = @json($activityData['data']);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Actividad',
+                    data: data,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.2,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f3f4f6',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 @endsection

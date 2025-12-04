@@ -48,97 +48,105 @@
             <!-- Filtro por evento -->
             <select class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white">
                 <option>Todos los eventos</option>
-                <option>Hackathon 2024</option>
-                <option>Feria de Ciencias</option>
-                <option>Robótica</option>
+                @foreach($eventos as $evento)
+                    <option value="{{ $evento->id }}">{{ $evento->title }}</option>
+                @endforeach
             </select>
-
-            <!-- Botón crear equipo -->
-            <button onclick="mostrarModalCrearEquipo()" class="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium whitespace-nowrap">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Crear Primer Equipo
-            </button>
         </div>
     </div>
 
-    <!-- Estado vacío -->
-    <div class="bg-white rounded-xl p-16 text-center shadow-sm border border-gray-200">
-        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-        </div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">No tienes equipos</h2>
-        <p class="text-gray-600 mb-6 max-w-md mx-auto">
-            Crea un equipo o acepta una invitación para comenzar
-        </p>
-        <button onclick="mostrarModalCrearEquipo()" class="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Crear Primer Equipo
-        </button>
-    </div>
-</div>
+    <!-- Lista de Equipos o Estado vacío -->
+    @if($equipos->count() > 0)
+        <!-- Grid de Equipos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach($equipos as $equipo)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden">
+                <!-- Header del card -->
+                <div class="bg-gradient-to-r from-gray-900 to-gray-700 p-6">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-1">{{ $equipo->name }}</h3>
+                            <p class="text-gray-300 text-sm">{{ $equipo->event->title ?? 'Sin evento' }}</p>
+                        </div>
+                        <span class="px-3 py-1 bg-white bg-opacity-20 text-white text-xs font-semibold rounded-full">
+                            {{ ucfirst($equipo->status) }}
+                        </span>
+                    </div>
+                </div>
 
-<!-- Modal Crear Equipo -->
-<div id="modalCrearEquipo" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Crear Nuevo Equipo</h2>
-            <button onclick="cerrarModalCrearEquipo()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        
-        <form>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Equipo</label>
-                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" placeholder="Ej: Los Innovadores">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Evento</label>
-                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white">
-                        <option>Selecciona un evento</option>
-                        <option>Hackathon de Innovación 2024</option>
-                        <option>Feria de Ciencias 2024</option>
-                        <option>Concurso de Robótica</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción (opcional)</label>
-                    <textarea class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" rows="3" placeholder="Describe tu equipo..."></textarea>
+                <!-- Contenido del card -->
+                <div class="p-6">
+                    <!-- Descripción -->
+                    @if($equipo->description)
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                            {{ $equipo->description }}
+                        </p>
+                    @else
+                        <p class="text-gray-400 text-sm mb-4 italic">
+                            Sin descripción
+                        </p>
+                    @endif
+
+                    <!-- Estadísticas -->
+                    <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <span>{{ $equipo->members_count }} miembros</span>
+                        </div>
+                        @if($equipo->project)
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span>Proyecto</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Miembros avatars -->
+                    <div class="flex items-center mb-4">
+                        <div class="flex -space-x-2">
+                            @foreach($equipo->members->take(3) as $member)
+                                <div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-600">
+                                    {{ strtoupper(substr($member->name, 0, 1)) }}
+                                </div>
+                            @endforeach
+                            @if($equipo->members_count > 3)
+                                <div class="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-semibold text-gray-500">
+                                    +{{ $equipo->members_count - 3 }}
+                                </div>
+                            @endif
+                        </div>
+                        <span class="ml-3 text-xs text-gray-500">Integrantes</span>
+                    </div>
+
+                    <!-- Botón ver detalle -->
+                    <a href="#" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm">
+                        Ver Equipo
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
-            
-            <div class="flex gap-3 mt-6">
-                <button type="button" onclick="cerrarModalCrearEquipo()" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-                    Cancelar
-                </button>
-                <button type="submit" class="flex-1 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium">
-                    Crear Equipo
-                </button>
+            @endforeach
+        </div>
+    @else
+        <!-- Estado vacío -->
+        <div class="bg-white rounded-xl p-16 text-center shadow-sm border border-gray-200">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
             </div>
-        </form>
-    </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">No tienes equipos</h2>
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                Aún no eres parte de ningún equipo
+            </p>
+        </div>
+    @endif
 </div>
 
-<script>
-    function mostrarModalCrearEquipo() {
-        document.getElementById('modalCrearEquipo').classList.remove('hidden');
-        document.getElementById('modalCrearEquipo').classList.add('flex');
-    }
-
-    function cerrarModalCrearEquipo() {
-        document.getElementById('modalCrearEquipo').classList.add('hidden');
-        document.getElementById('modalCrearEquipo').classList.remove('flex');
-    }
-</script>
 @endsection

@@ -26,17 +26,9 @@
     </nav>
 
     <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Rankings</h1>
-            <p class="text-gray-600 mt-1">Clasificaciones y resultados de eventos</p>
-        </div>
-        <button class="flex items-center gap-2 px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
-            Exportar Resultados
-        </button>
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Rankings</h1>
+        <p class="text-gray-600 mt-1">Clasificaciones y resultados de eventos</p>
     </div>
 
     <!-- Selector de evento y búsqueda -->

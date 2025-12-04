@@ -102,15 +102,30 @@
                 </ul>
             </nav>
 
-            <!-- Logout -->
-            <div class="p-4 border-t border-gray-200">
+            <!-- User Info at Bottom + Logout -->
+            <div class="p-4 border-t border-gray-200 space-y-3">
+                <!-- User Card -->
+                <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
+                    <div class="relative">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                            <span class="text-white font-semibold text-sm">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+                        </div>
+                        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-gray-900 text-sm truncate">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-gray-500">Asesor</p>
+                    </div>
+                </div>
+
+                <!-- Logout Button -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-gray-700 hover:bg-gray-100 transition-all">
+                    <button type="submit" class="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-red-600 hover:bg-red-50 transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                         </svg>
-                        <span>Cerrar Sesión</span>
+                        <span class="font-medium">Cerrar Sesión</span>
                     </button>
                 </form>
             </div>

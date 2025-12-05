@@ -31,26 +31,37 @@ Route::middleware('auth')->group(function () {
     Route::prefix('estudiante')->name('estudiante.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         
+        // EVENTOS
         Route::get('/eventos', [EventoController::class, 'index'])->name('eventos');
         Route::get('/eventos/{id}', [EventoController::class, 'show'])->name('evento-detalle');
-        Route::post('/registrar-equipo', [EventoController::class, 'registrarEquipo'])->name('registrar-equipo');
+        Route::post('/eventos/inscribir-equipo', [EventoController::class, 'inscribirEquipo'])->name('eventos.inscribir-equipo');
         Route::post('/eventos/solicitar-unirse', [EventoController::class, 'solicitarUnirse'])->name('eventos.solicitar-unirse');
+        Route::post('/registrar-equipo', [EventoController::class, 'registrarEquipo'])->name('registrar-equipo');
         
+        // EQUIPOS
         Route::get('/equipos', [EquipoController::class, 'index'])->name('equipos');
         Route::post('/equipos', [EquipoController::class, 'store'])->name('equipos.store');
+        Route::post('/equipos/join', [EquipoController::class, 'join'])->name('equipos.join');
         Route::get('/equipos/{id}', [EquipoController::class, 'show'])->name('equipos.show');
         Route::delete('/equipos/{id}/leave', [EquipoController::class, 'leave'])->name('equipos.leave');
         Route::post('/equipos/aceptar-solicitud', [EquipoController::class, 'aceptarSolicitud'])->name('equipos.aceptar-solicitud');
         Route::post('/equipos/rechazar-solicitud', [EquipoController::class, 'rechazarSolicitud'])->name('equipos.rechazar-solicitud');
         
+        // PROYECTOS
         Route::get('/proyectos', [ProyectoController::class, 'index'])->name('proyectos');
         Route::post('/proyectos', [ProyectoController::class, 'store'])->name('proyectos.store');
         Route::get('/proyectos/{id}', [ProyectoController::class, 'show'])->name('proyectos.show');
         Route::put('/proyectos/{id}', [ProyectoController::class, 'update'])->name('proyectos.update');
+        Route::post('/proyectos/{id}/assign-advisor', [ProyectoController::class, 'assignAdvisor'])->name('proyectos.assign-advisor');
+        Route::post('/proyectos/{id}/submit-file', [ProyectoController::class, 'submitFile'])->name('proyectos.submit-file');
+        Route::get('/proyectos/{id}/download-submission', [ProyectoController::class, 'downloadSubmission'])->name('proyectos.download-submission');
+        Route::delete('/proyectos/{id}/delete-submission', [ProyectoController::class, 'deleteSubmission'])->name('proyectos.delete-submission');
         Route::delete('/proyectos/{id}', [ProyectoController::class, 'destroy'])->name('proyectos.destroy');
         
+        // RANKINGS
         Route::get('/rankings', [RankingController::class, 'index'])->name('rankings');
         
+        // PERFIL
         Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil');
         Route::post('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
         Route::post('/perfil/password', [PerfilController::class, 'updatePassword'])->name('perfil.update-password');

@@ -20,6 +20,7 @@ class User extends Authenticatable
         'email',
         'numero_control',
         'password',
+        'role',
         'user_type',
         'avatar_url',
         'phone',
@@ -56,6 +57,11 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Team::class, 'team_members', 'user_id', 'team_id')
                     ->withPivot('role', 'joined_at');
+    }
+
+    public function advisedProjects()
+    {
+        return $this->hasMany(Project::class, 'advisor_id');
     }
 
     public function invitations()
@@ -100,29 +106,31 @@ class User extends Authenticatable
     // Verificadores de rol
     public function isAdmin()
     {
-        return $this->user_type === 'admin';
+        return $this->user_type === 'admin' || $this->role === 'admin';
     }
 
     public function isMaestro()
     {
-        return $this->user_type === 'maestro';
+        return $this->user_type === 'maestro' || $this->role === 'asesor';
     }
 
     public function isJuez()
     {
-        return $this->user_type === 'juez';
+        return $this->user_type === 'juez' || $this->role === 'juez';
     }
 
     public function isEstudiante()
     {
-        return $this->user_type === 'estudiante';
+        return $this->user_type === 'estudiante' || $this->role === 'estudiante';
     }
 
     public function getRoleName()
     {
-        return match($this->user_type) {
+        $role = $this->role ?? $this->user_type;
+        
+        return match($role) {
             'admin' => 'Administrador',
-            'maestro' => 'Maestro (Asesor)',
+            'maestro', 'asesor' => 'Maestro (Asesor)',
             'juez' => 'Juez',
             'estudiante' => 'Estudiante',
             default => 'Usuario',
@@ -131,9 +139,11 @@ class User extends Authenticatable
 
     public function getRoleBadgeClass()
     {
-        return match($this->user_type) {
+        $role = $this->role ?? $this->user_type;
+        
+        return match($role) {
             'admin' => 'bg-red-100 text-red-800',
-            'maestro' => 'bg-green-100 text-green-800',
+            'maestro', 'asesor' => 'bg-green-100 text-green-800',
             'juez' => 'bg-purple-100 text-purple-800',
             'estudiante' => 'bg-blue-100 text-blue-800',
             default => 'bg-gray-100 text-gray-800',
@@ -148,7 +158,7 @@ class User extends Authenticatable
 
     public function scopeByType($query, $type)
     {
-        return $query->where('user_type', $type);
+        return $query->where('user_type', $type)->orWhere('role', $type);
     }
 
     public function updateLastLogin()

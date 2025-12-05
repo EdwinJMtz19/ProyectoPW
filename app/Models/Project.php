@@ -17,6 +17,7 @@ class Project extends Model
         'id',
         'team_id',
         'event_id',
+        'advisor_id',
         'title',
         'description',
         'status',
@@ -27,6 +28,8 @@ class Project extends Model
         'documents',
         'final_score',
         'rank',
+        'submission_file_path',
+        'submission_file_name',
         'submitted_at',
         'evaluated_at',
     ];
@@ -48,6 +51,11 @@ class Project extends Model
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function advisor()
+    {
+        return $this->belongsTo(User::class, 'advisor_id');
     }
 
     public function evaluations()

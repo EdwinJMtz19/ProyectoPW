@@ -19,24 +19,26 @@ class EquipoController extends Controller
         
         $query = Team::whereHas('members', function($q) use ($user) {
             $q->where('user_id', $user->id);
-        })->with(['event', 'leader', 'members']);
-
-        if ($request->filled('event_id') && $request->event_id !== 'all') {
-            $query->where('event_id', $request->event_id);
-        }
+        })->with(['leader', 'members']);
 
         if ($request->filled('role') && $request->role === 'leader') {
             $query->where('leader_id', $user->id);
         }
 
-        $equipos = $query->get();
-        $eventos = Event::where('is_published', true)->get();
+        $equipos = $query->orderBy('created_at', 'desc')->get();
+        
+        // Para cada equipo, obtener sus eventos participados
+        foreach ($equipos as $equipo) {
+            $equipo->eventos_count = DB::table('event_registrations')
+                ->where('team_id', $equipo->id)
+                ->count();
+        }
 
         if ($request->ajax()) {
             return response()->json(['equipos' => $equipos, 'count' => $equipos->count()]);
         }
 
-        return view('estudiante.equipos', compact('equipos', 'eventos'));
+        return view('estudiante.equipos', compact('equipos'));
     }
 
     public function store(Request $request)
@@ -44,33 +46,19 @@ class EquipoController extends Controller
         $request->validate([
             'team_name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'event_id' => 'required|exists:events,id',
         ]);
 
         $user = Auth::user();
-        $evento = Event::findOrFail($request->event_id);
-
-        $equipoExistente = Team::where('event_id', $request->event_id)
-                                ->whereHas('members', function($query) use ($user) {
-                                    $query->where('user_id', $user->id);
-                                })
-                                ->first();
-
-        if ($equipoExistente) {
-            return response()->json(['success' => false, 'message' => 'Ya tienes un equipo en este evento'], 422);
-        }
-
-        if ($evento->max_teams && $evento->registered_teams_count >= $evento->max_teams) {
-            return response()->json(['success' => false, 'message' => 'Límite de equipos alcanzado'], 422);
-        }
 
         try {
+            DB::beginTransaction();
+
             $teamId = Str::uuid();
             $team = Team::create([
                 'id' => $teamId,
                 'name' => $request->team_name,
                 'description' => $request->description,
-                'event_id' => $request->event_id,
+                'event_id' => null, // Equipos independientes
                 'leader_id' => $user->id,
                 'status' => 'active',
                 'members_count' => 1,
@@ -84,11 +72,16 @@ class EquipoController extends Controller
                 'joined_at' => now(),
             ]);
 
-            $evento->increment('registered_teams_count');
+            DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'Equipo creado']);
+            return response()->json([
+                'success' => true, 
+                'message' => 'Equipo creado exitosamente',
+                'team_id' => $teamId
+            ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -96,11 +89,25 @@ class EquipoController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $equipo = Team::with(['event', 'leader', 'members', 'project'])->findOrFail($id);
+        $equipo = Team::with(['leader', 'members'])->findOrFail($id);
 
         if (!$equipo->isMember($user->id)) {
-            abort(403);
+            abort(403, 'No tienes permiso para ver este equipo');
         }
+
+        // Obtener eventos donde el equipo participa
+        $eventosParticipados = DB::table('event_registrations')
+            ->where('team_id', $id)
+            ->join('events', 'event_registrations.event_id', '=', 'events.id')
+            ->join('projects', 'event_registrations.project_id', '=', 'projects.id')
+            ->select(
+                'events.*', 
+                'event_registrations.registered_at',
+                'projects.id as project_id',
+                'projects.title as project_title'
+            )
+            ->orderBy('event_registrations.registered_at', 'desc')
+            ->get();
 
         // Obtener solicitudes pendientes si es líder
         $solicitudesPendientes = [];
@@ -114,7 +121,7 @@ class EquipoController extends Controller
                 ->get();
         }
 
-        return view('estudiante.equipo-detalle', compact('equipo', 'solicitudesPendientes'));
+        return view('estudiante.equipo-detalle', compact('equipo', 'solicitudesPendientes', 'eventosParticipados'));
     }
 
     public function leave($id)
@@ -123,24 +130,44 @@ class EquipoController extends Controller
         $equipo = Team::with('members')->findOrFail($id);
 
         if (!$equipo->isMember($user->id)) {
-            return response()->json(['success' => false, 'message' => 'No eres miembro'], 403);
+            return response()->json(['success' => false, 'message' => 'No eres miembro de este equipo'], 403);
         }
 
         if ($equipo->isLeader($user->id) && $equipo->members_count > 1) {
-            return response()->json(['success' => false, 'message' => 'Transfiere el liderazgo primero'], 422);
+            return response()->json(['success' => false, 'message' => 'Debes transferir el liderazgo antes de salir o elimina el equipo'], 422);
         }
 
         try {
-            DB::table('team_members')->where('team_id', $id)->where('user_id', $user->id)->delete();
+            DB::beginTransaction();
+
+            DB::table('team_members')
+                ->where('team_id', $id)
+                ->where('user_id', $user->id)
+                ->delete();
+            
             $equipo->decrement('members_count');
 
+            // Si el equipo queda vacío, eliminarlo
             if ($equipo->members_count == 0) {
+                // Eliminar registros de eventos
+                DB::table('event_registrations')
+                    ->where('team_id', $id)
+                    ->delete();
+                
+                // Eliminar proyectos
+                DB::table('projects')
+                    ->where('team_id', $id)
+                    ->delete();
+                
+                // Eliminar equipo
                 $equipo->delete();
-                $equipo->event->decrement('registered_teams_count');
             }
 
-            return response()->json(['success' => true, 'message' => 'Has abandonado el equipo']);
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Has abandonado el equipo exitosamente']);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -161,40 +188,45 @@ class EquipoController extends Controller
             return response()->json(['success' => false, 'message' => 'Solicitud no encontrada'], 404);
         }
 
-        $equipo = Team::with('event')->findOrFail($solicitud->team_id);
+        $equipo = Team::findOrFail($solicitud->team_id);
 
-        // Verificar que sea el líder
         if (!$equipo->isLeader($user->id)) {
-            return response()->json(['success' => false, 'message' => 'No eres el líder'], 403);
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede aceptar solicitudes'], 403);
         }
 
-        // Verificar si el equipo está lleno
-        if ($equipo->members_count >= $equipo->event->max_team_size) {
-            return response()->json(['success' => false, 'message' => 'El equipo ya está completo'], 422);
-        }
+        // Verificar si el usuario ya es miembro de otro equipo en los mismos eventos
+        $eventosEquipo = DB::table('event_registrations')
+            ->where('team_id', $equipo->id)
+            ->pluck('event_id');
+        
+        if ($eventosEquipo->count() > 0) {
+            $tieneConflicto = DB::table('event_registrations')
+                ->whereIn('event_id', $eventosEquipo)
+                ->whereExists(function($query) use ($solicitud) {
+                    $query->select(DB::raw(1))
+                          ->from('team_members')
+                          ->whereColumn('team_members.team_id', 'event_registrations.team_id')
+                          ->where('team_members.user_id', $solicitud->user_id);
+                })
+                ->exists();
+            
+            if ($tieneConflicto) {
+                DB::table('join_requests')
+                    ->where('id', $request->request_id)
+                    ->update([
+                        'status' => 'rejected',
+                        'responded_at' => now(),
+                        'updated_at' => now(),
+                    ]);
 
-        // Verificar si el usuario ya tiene equipo en este evento
-        $tieneEquipo = Team::where('event_id', $equipo->event_id)
-            ->whereHas('members', function($query) use ($solicitud) {
-                $query->where('user_id', $solicitud->user_id);
-            })
-            ->exists();
-
-        if ($tieneEquipo) {
-            // Rechazar automáticamente
-            DB::table('join_requests')
-                ->where('id', $request->request_id)
-                ->update([
-                    'status' => 'rejected',
-                    'responded_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-            return response()->json(['success' => false, 'message' => 'El usuario ya tiene un equipo en este evento'], 422);
+                return response()->json(['success' => false, 'message' => 'El usuario ya participa en un evento con otro equipo'], 422);
+            }
         }
 
         try {
-            // Agregar al usuario al equipo
+            DB::beginTransaction();
+
+            // Agregar al equipo
             DB::table('team_members')->insert([
                 'id' => Str::uuid(),
                 'team_id' => $equipo->id,
@@ -228,12 +260,15 @@ class EquipoController extends Controller
                 'is_read' => false,
             ]);
 
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Solicitud aceptada exitosamente'
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -256,13 +291,11 @@ class EquipoController extends Controller
 
         $equipo = Team::findOrFail($solicitud->team_id);
 
-        // Verificar que sea el líder
         if (!$equipo->isLeader($user->id)) {
-            return response()->json(['success' => false, 'message' => 'No eres el líder'], 403);
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede rechazar solicitudes'], 403);
         }
 
         try {
-            // Actualizar solicitud
             DB::table('join_requests')
                 ->where('id', $request->request_id)
                 ->update([
@@ -271,7 +304,6 @@ class EquipoController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            // Notificar al usuario
             Notification::create([
                 'id' => Str::uuid(),
                 'user_id' => $solicitud->user_id,

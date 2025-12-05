@@ -33,7 +33,7 @@
                 <span class="px-4 py-1.5 bg-white/90 text-gray-800 text-sm font-bold rounded-full">{{ $evento->category }}</span>
             </div>
             <h1 class="text-5xl font-bold text-white mb-3">{{ $evento->title }}</h1>
-            <p class="text-xl text-white/90 max-w-3xl">{{ $evento->short_description }}</p>
+            <p class="text-xl text-white/90 max-w-3xl">{{ $evento->short_description ?? $evento->description }}</p>
         </div>
     </div>
 
@@ -41,6 +41,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Información Principal -->
         <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Descripción -->
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">📝 Descripción</h2>
+                <p class="text-gray-700 leading-relaxed">{{ $evento->description }}</p>
+            </div>
+
             <!-- Requisitos -->
             <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
@@ -148,7 +155,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                         <p class="text-gray-600 font-medium">No hay equipos inscritos aún</p>
-                        <p class="text-sm text-gray-500 mt-1">Sé el primero en crear un equipo</p>
+                        <p class="text-sm text-gray-500 mt-1">Sé el primero en inscribir tu equipo</p>
                     </div>
                 @endif
             </div>
@@ -208,42 +215,55 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Tamaño de equipo</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $evento->min_team_size }}-{{ $evento->max_team_size }} integrantes</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ $evento->min_team_size }}-{{ $evento->max_team_size }}</p>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <div class="p-3 bg-purple-50 rounded-xl">
                             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Premio principal</p>
-                            <p class="text-2xl font-bold text-gray-900">$50,000 MXN</p>
+                            <p class="text-sm text-gray-600">Fecha del evento</p>
+                            <p class="text-lg font-bold text-gray-900">{{ \Carbon\Carbon::parse($evento->event_start_date)->format('d M Y') }}</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="border-t border-gray-200 pt-6">
                     @if($miEquipo)
-                        <!-- Ya tiene equipo -->
+                        <!-- Ya tiene equipo inscrito -->
                         <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                            <p class="text-sm font-semibold text-green-800 mb-1">✓ Ya estás registrado</p>
+                            <p class="text-sm font-semibold text-green-800 mb-1">✓ Ya estás inscrito</p>
                             <p class="text-xs text-green-700">Equipo: {{ $miEquipo->name }}</p>
                         </div>
                         <a href="{{ route('estudiante.equipos.show', $miEquipo->id) }}" 
                            class="block w-full py-3 px-4 bg-gray-900 text-white text-center rounded-xl hover:bg-gray-800 transition-colors font-semibold">
                             Ver mi equipo
                         </a>
+                    @elseif($misEquipos->count() > 0)
+                        <!-- Tiene equipos sin inscribir - Botón inscribir equipo existente -->
+                        <button onclick="mostrarModalInscripcion()" 
+                                class="w-full mb-3 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Inscribir mi equipo
+                        </button>
+                        <button onclick="mostrarModalCrearEquipo()" 
+                                class="w-full py-3 px-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-semibold">
+                            Crear nuevo equipo
+                        </button>
                     @else
-                        <!-- Botón para registrar equipo -->
-                        <button id="btn-registrar-equipo" 
+                        <!-- No tiene equipos - Solo crear nuevo -->
+                        <button onclick="mostrarModalCrearEquipo()" 
                                 class="w-full py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
-                            Crear Nuevo Equipo
+                            Crear equipo
                         </button>
                     @endif
                 </div>
@@ -252,19 +272,84 @@
     </div>
 </div>
 
-<!-- Modal de Registro de Equipo -->
-<div id="modal-registrar-equipo" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-8 relative">
-        <button id="btn-cerrar-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+<!-- Modal Inscribir Equipo Existente -->
+<div id="modal-inscribir-equipo" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-8 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="cerrarModalInscripcion()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </button>
 
-        <h3 class="text-2xl font-bold text-gray-900 mb-2">Crear Nuevo Equipo</h3>
-        <p class="text-gray-600 mb-6">Forma tu equipo para {{ $evento->title }}</p>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Inscribir equipo</h3>
+        <p class="text-gray-600 mb-6">Selecciona tu equipo para {{ $evento->title }}</p>
 
-        <form id="form-registrar-equipo" class="space-y-4">
+        <form id="form-inscribir-equipo" class="space-y-4">
+            @csrf
+            <input type="hidden" name="event_id" value="{{ $evento->id }}">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona tu equipo *</label>
+                <select name="team_id" id="select-team-inscripcion" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Selecciona un equipo</option>
+                    @foreach($misEquipos as $equipo)
+                        <option value="{{ $equipo->id }}">{{ $equipo->name }} ({{ $equipo->members_count }} miembros)</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del proyecto *</label>
+                <input type="text" 
+                       name="project_title" 
+                       required
+                       placeholder="Ej: Sistema de Gestión IoT"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción del proyecto *</label>
+                <textarea name="project_description" 
+                          required
+                          rows="4"
+                          placeholder="Describe tu proyecto para el evento..."
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p class="text-sm text-blue-800">
+                    <strong>💡 Nota:</strong> Al inscribir tu equipo, se creará automáticamente un proyecto para este evento.
+                </p>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button type="button" 
+                        onclick="cerrarModalInscripcion()"
+                        class="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-semibold">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold">
+                    Inscribir equipo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Crear Nuevo Equipo -->
+<div id="modal-crear-equipo" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-8 relative">
+        <button onclick="cerrarModalCrearEquipo()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Crear nuevo equipo</h3>
+        <p class="text-gray-600 mb-6">Crea tu equipo y luego podrás inscribirlo</p>
+
+        <form id="form-crear-equipo" class="space-y-4">
             @csrf
             <input type="hidden" name="event_id" value="{{ $evento->id }}">
 
@@ -285,15 +370,21 @@
                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
 
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <p class="text-sm text-yellow-800">
+                    <strong>⚠️ Nota:</strong> Después de crear el equipo, deberás inscribirlo al evento con un proyecto.
+                </p>
+            </div>
+
             <div class="flex gap-3 pt-4">
                 <button type="button" 
-                        id="btn-cancelar"
+                        onclick="cerrarModalCrearEquipo()"
                         class="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-semibold">
                     Cancelar
                 </button>
                 <button type="submit" 
                         class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold">
-                    Crear Equipo
+                    Crear equipo
                 </button>
             </div>
         </form>
@@ -301,67 +392,103 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('modal-registrar-equipo');
-    const btnAbrir = document.getElementById('btn-registrar-equipo');
-    const btnCerrar = document.getElementById('btn-cerrar-modal');
-    const btnCancelar = document.getElementById('btn-cancelar');
-    const form = document.getElementById('form-registrar-equipo');
+// Modal Inscribir Equipo
+function mostrarModalInscripcion() {
+    document.getElementById('modal-inscribir-equipo').classList.remove('hidden');
+}
+
+function cerrarModalInscripcion() {
+    document.getElementById('modal-inscribir-equipo').classList.add('hidden');
+    document.getElementById('form-inscribir-equipo').reset();
+}
+
+document.getElementById('form-inscribir-equipo').addEventListener('submit', async function(e) {
+    e.preventDefault();
     
-    if (btnAbrir) {
-        btnAbrir.addEventListener('click', () => modal.classList.remove('hidden'));
-    }
+    const formData = new FormData(this);
+    const btn = this.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
     
-    function cerrarModal() {
-        modal.classList.add('hidden');
-        form.reset();
-    }
+    btn.disabled = true;
+    btn.innerHTML = 'Inscribiendo...';
     
-    if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
-    if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
-    
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) cerrarModal();
-    });
-    
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    try {
+        const response = await fetch('{{ route("estudiante.eventos.inscribir-equipo") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: formData
+        });
         
-        const formData = new FormData(form);
-        const btn = form.querySelector('button[type="submit"]');
-        const btnText = btn.innerHTML;
+        const data = await response.json();
         
-        btn.disabled = true;
-        btn.innerHTML = 'Creando...';
-        
-        try {
-            const response = await fetch('/estudiante/registrar-equipo', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                },
-                body: formData
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('✓ Equipo creado exitosamente');
-                window.location.reload();
-            } else {
-                alert('✗ ' + data.message);
-                btn.disabled = false;
-                btn.innerHTML = btnText;
-            }
-        } catch (error) {
-            alert('✗ Error al crear el equipo');
+        if (data.success) {
+            alert('✓ ' + data.message);
+            window.location.reload();
+        } else {
+            alert('✗ ' + data.message);
             btn.disabled = false;
             btn.innerHTML = btnText;
         }
-    });
+    } catch (error) {
+        alert('✗ Error al inscribir el equipo');
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
 });
 
+// Modal Crear Equipo
+function mostrarModalCrearEquipo() {
+    document.getElementById('modal-crear-equipo').classList.remove('hidden');
+}
+
+function cerrarModalCrearEquipo() {
+    document.getElementById('modal-crear-equipo').classList.add('hidden');
+    document.getElementById('form-crear-equipo').reset();
+}
+
+document.getElementById('form-crear-equipo').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const btn = this.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = 'Creando...';
+    
+    try {
+        const response = await fetch('{{ route("estudiante.registrar-equipo") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✓ ' + data.message);
+            cerrarModalCrearEquipo();
+            // Actualizar para mostrar el modal de inscripción con el nuevo equipo
+            window.location.reload();
+        } else {
+            alert('✗ ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = btnText;
+        }
+    } catch (error) {
+        alert('✗ Error al crear el equipo');
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// Solicitar unirse a equipo
 async function solicitarUnirse(teamId, teamName) {
     if (!confirm(`¿Deseas enviar una solicitud para unirte al equipo "${teamName}"?`)) {
         return;

@@ -29,14 +29,6 @@
                         @endif
                     </div>
                     <p class="text-white/90 text-lg mb-4">{{ $equipo->description ?? 'Sin descripción' }}</p>
-                    <div class="flex items-center gap-6 text-white/80">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <span>{{ $equipo->event->title }}</span>
-                        </div>
-                    </div>
                 </div>
                 <div class="flex-shrink-0">
                     <div class="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/20">
@@ -174,54 +166,103 @@
                         </div>
                     @endforeach
                 </div>
-
-                @if($equipo->members_count < $equipo->event->max_team_size)
-                    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p class="text-sm text-blue-800">
-                            <span class="font-semibold">💡 Tip:</span> Puedes agregar hasta {{ $equipo->event->max_team_size - $equipo->members_count }} miembros más.
-                        </p>
-                    </div>
-                @endif
             </div>
 
-            <!-- Proyecto del Equipo -->
-            @if($equipo->project)
-                <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">📁 Proyecto</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-lg text-gray-900">{{ $equipo->project->title }}</h3>
-                            <p class="text-gray-600 mt-2">{{ $equipo->project->description }}</p>
-                        </div>
-                        @if($equipo->project->repository_url)
-                            <a href="{{ $equipo->project->repository_url }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                                Ver repositorio
-                            </a>
-                        @endif
-                    </div>
+            <!-- Eventos Participados -->
+            @if(count($eventosParticipados) > 0)
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div class="flex items-center gap-3 mb-6">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <h2 class="text-2xl font-bold text-gray-900">🎯 Eventos Participados</h2>
                 </div>
+
+                <div class="space-y-4">
+                    @foreach($eventosParticipados as $evento)
+                        <div class="p-5 rounded-xl border-2 border-gray-200 hover:border-blue-300 transition-all bg-gradient-to-r from-gray-50 to-blue-50">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-gray-900 mb-1">{{ $evento->title }}</h3>
+                                    <p class="text-sm text-gray-600 mb-2 line-clamp-2">{{ $evento->description }}</p>
+                                </div>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full ml-3">
+                                    {{ ucfirst($evento->category) }}
+                                </span>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span>{{ \Carbon\Carbon::parse($evento->event_start_date)->format('d M Y') }}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    <span>{{ $evento->location ?? 'Online' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                                <span class="text-xs text-gray-500">
+                                    Inscrito el {{ \Carbon\Carbon::parse($evento->registered_at)->format('d/m/Y') }}
+                                </span>
+                                <a href="{{ route('estudiante.evento-detalle', $evento->id) }}" 
+                                   class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                    Ver evento
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @else
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div class="text-center py-8">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Sin eventos aún</h3>
+                    <p class="text-gray-600 mb-4">Este equipo no ha participado en ningún evento</p>
+                    <a href="{{ route('estudiante.eventos') }}" 
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold text-sm">
+                        Explorar eventos
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
             @endif
         </div>
 
         <!-- Sidebar -->
         <div class="lg:col-span-1 space-y-6">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-8">
-                <h3 class="font-bold text-lg text-gray-900 mb-4">Información del Evento</h3>
+                <h3 class="font-bold text-lg text-gray-900 mb-4">Información del Equipo</h3>
                 <div class="space-y-3 text-sm">
                     <div>
-                        <p class="text-gray-600 mb-1">Evento</p>
-                        <p class="font-semibold text-gray-900">{{ $equipo->event->title }}</p>
+                        <p class="text-gray-600 mb-1">Líder</p>
+                        <p class="font-semibold text-gray-900">{{ $equipo->leader->name }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-600 mb-1">Fecha del evento</p>
-                        <p class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($equipo->event->event_start_date)->format('d M Y') }}</p>
+                        <p class="text-gray-600 mb-1">Miembros</p>
+                        <p class="font-semibold text-gray-900">{{ $equipo->members_count }} {{ $equipo->members_count == 1 ? 'miembro' : 'miembros' }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-600 mb-1">Ubicación</p>
-                        <p class="font-semibold text-gray-900">{{ $equipo->event->location }}</p>
+                        <p class="text-gray-600 mb-1">Eventos participados</p>
+                        <p class="font-semibold text-gray-900">{{ count($eventosParticipados) }} {{ count($eventosParticipados) == 1 ? 'evento' : 'eventos' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 mb-1">Creado el</p>
+                        <p class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($equipo->created_at)->format('d M Y') }}</p>
                     </div>
                     <div>
                         <p class="text-gray-600 mb-1">Estado del equipo</p>
@@ -232,15 +273,8 @@
                     </div>
                 </div>
 
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <a href="{{ route('estudiante.evento-detalle', $equipo->event_id) }}" 
-                       class="block w-full py-3 px-4 bg-gray-900 text-white text-center rounded-lg hover:bg-gray-800 transition-colors font-medium">
-                        Ver evento completo
-                    </a>
-                </div>
-
                 @if($equipo->leader_id !== auth()->id())
-                    <div class="mt-4">
+                    <div class="mt-6 pt-6 border-t border-gray-200">
                         <button onclick="confirmarSalirEquipo()" 
                                 class="block w-full py-3 px-4 border border-red-300 text-red-600 text-center rounded-lg hover:bg-red-50 transition-colors font-medium">
                             Abandonar equipo

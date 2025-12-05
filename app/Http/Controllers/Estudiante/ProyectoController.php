@@ -5,9 +5,15 @@ namespace App\Http\Controllers\Estudiante;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Team;
+use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class ProyectoController extends Controller
 {
@@ -15,66 +21,197 @@ class ProyectoController extends Controller
     {
         $user = Auth::user();
         
+        // Obtener equipos del usuario
         $equipos = Team::whereHas('members', function($q) use ($user) {
             $q->where('user_id', $user->id);
-        })->with(['event', 'project'])->get();
+        })->get();
         
+        // Obtener proyectos de esos equipos (sin cargar advisor aún)
         $proyectos = Project::whereIn('team_id', $equipos->pluck('id'))
-                            ->with(['team.event', 'team.leader'])
+                            ->with(['team.leader', 'event'])
                             ->orderBy('created_at', 'desc')
                             ->get();
         
-        return view('estudiante.proyectos', compact('proyectos', 'equipos'));
+        // Obtener eventos disponibles para inscripción
+        $now = Carbon::now();
+        $eventos = Event::where('is_published', true)
+                       ->where(function($query) use ($now) {
+                           // Eventos con status 'upcoming' (próximamente) u 'open' (abiertos)
+                           $query->where('status', 'upcoming')
+                                 ->orWhere('status', 'open');
+                       })
+                       ->where(function($query) use ($now) {
+                           // Eventos que aún no han terminado
+                           $query->where('event_end_date', '>=', $now)
+                                 ->orWhereNull('event_end_date');
+                       })
+                       ->orderBy('event_start_date', 'asc')
+                       ->get();
+        
+        return view('estudiante.proyectos', compact('proyectos', 'equipos', 'eventos'));
     }
 
     public function show($id)
     {
         $user = Auth::user();
-        $proyecto = Project::with(['team.members', 'team.event', 'evaluations.judge'])->findOrFail($id);
+        
+        // Cargar proyecto con todas las relaciones necesarias
+        $proyecto = Project::with([
+            'team.members', 
+            'team.leader',
+            'event', 
+            'evaluations.judge'
+        ])->findOrFail($id);
+        
+        // Cargar advisor solo si existe la columna
+        if (Schema::hasColumn('projects', 'advisor_id')) {
+            $proyecto->load('advisor');
+        }
         
         if (!$proyecto->team->isMember($user->id)) {
             abort(403, 'No tienes permiso para ver este proyecto');
         }
         
-        return view('estudiante.proyecto-detalle', compact('proyecto'));
+        // Obtener asesores disponibles (que no tengan proyecto en este evento)
+        $asesoresDisponibles = collect();
+        
+        if (Schema::hasColumn('projects', 'advisor_id')) {
+            $asesoresDisponibles = User::where(function($query) {
+                    $query->where('role', 'asesor')
+                          ->orWhere('user_type', 'maestro')
+                          ->orWhere('user_type', 'asesor');
+                })
+                ->whereDoesntHave('advisedProjects', function($q) use ($proyecto) {
+                    $q->where('event_id', $proyecto->event_id)
+                      ->where('id', '!=', $proyecto->id);
+                })
+                ->orderBy('name', 'asc')
+                ->get();
+        }
+        
+        // Verificar si el usuario es líder
+        $esLider = $proyecto->team->isLeader($user->id);
+        
+        return view('estudiante.proyecto-detalle', compact('proyecto', 'asesoresDisponibles', 'esLider'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
+            'event_id' => 'required|exists:events,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
-        ], [
-            'team_id.required' => 'Debes seleccionar un equipo',
-            'title.required' => 'El título es obligatorio',
-            'description.required' => 'La descripción es obligatoria',
+            'repository_url' => 'nullable|url',
+            'demo_url' => 'nullable|url',
         ]);
 
         $user = Auth::user();
         $team = Team::findOrFail($request->team_id);
+        $event = Event::findOrFail($request->event_id);
 
+        // VALIDACIÓN 1: Usuario es miembro del equipo
         if (!$team->isMember($user->id)) {
             return response()->json(['success' => false, 'message' => 'No eres miembro de este equipo'], 403);
         }
 
-        if ($team->project) {
-            return response()->json(['success' => false, 'message' => 'Este equipo ya tiene un proyecto'], 422);
+        // VALIDACIÓN 2: Evento está disponible para inscripción
+        $now = Carbon::now();
+        
+        // El evento debe estar publicado
+        if (!$event->is_published) {
+            return response()->json(['success' => false, 'message' => 'Este evento no está disponible'], 422);
+        }
+
+        // El evento debe estar en status 'upcoming' u 'open'
+        if (!in_array($event->status, ['upcoming', 'open'])) {
+            return response()->json(['success' => false, 'message' => 'Las inscripciones para este evento no están disponibles'], 422);
+        }
+
+        // El evento no debe haber terminado
+        if ($event->event_end_date && Carbon::parse($event->event_end_date)->lt($now)) {
+            return response()->json(['success' => false, 'message' => 'Este evento ya ha terminado'], 422);
+        }
+
+        // VALIDACIÓN 3: El equipo NO está ya inscrito en este evento
+        $registroExistente = DB::table('event_registrations')
+            ->where('team_id', $request->team_id)
+            ->where('event_id', $request->event_id)
+            ->first();
+
+        if ($registroExistente) {
+            return response()->json(['success' => false, 'message' => 'Este equipo ya está inscrito en este evento'], 422);
+        }
+
+        // VALIDACIÓN 4: Límite de equipos en el evento
+        if ($event->max_teams) {
+            $equiposInscritos = DB::table('event_registrations')
+                ->where('event_id', $request->event_id)
+                ->count();
+            
+            if ($equiposInscritos >= $event->max_teams) {
+                return response()->json(['success' => false, 'message' => 'El evento ha alcanzado el límite de equipos'], 422);
+            }
+        }
+
+        // VALIDACIÓN 5: Ningún miembro del equipo está en otro equipo inscrito en el mismo evento
+        $miembrosIds = DB::table('team_members')
+            ->where('team_id', $request->team_id)
+            ->pluck('user_id');
+        
+        $conflicto = DB::table('event_registrations')
+            ->where('event_id', $request->event_id)
+            ->whereExists(function($query) use ($miembrosIds) {
+                $query->select(DB::raw(1))
+                      ->from('team_members')
+                      ->whereColumn('team_members.team_id', 'event_registrations.team_id')
+                      ->whereIn('team_members.user_id', $miembrosIds);
+            })
+            ->exists();
+        
+        if ($conflicto) {
+            return response()->json(['success' => false, 'message' => 'Uno o más miembros del equipo ya están participando en este evento con otro equipo'], 422);
         }
 
         try {
+            DB::beginTransaction();
+
+            // Crear proyecto
+            $projectId = Str::uuid();
             $proyecto = Project::create([
-                'id' => Str::uuid(),
+                'id' => $projectId,
                 'team_id' => $request->team_id,
-                'event_id' => $team->event_id,
+                'event_id' => $request->event_id,
                 'title' => $request->title,
                 'description' => $request->description,
-                'status' => 'in_progress',
+                'repository_url' => $request->repository_url,
+                'demo_url' => $request->demo_url,
+                'status' => 'draft',
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Proyecto creado exitosamente']);
+            // Registrar equipo en evento
+            DB::table('event_registrations')->insert([
+                'id' => Str::uuid(),
+                'team_id' => $request->team_id,
+                'event_id' => $request->event_id,
+                'project_id' => $projectId,
+                'registered_by' => $user->id,
+                'registered_at' => now(),
+            ]);
+
+            // Incrementar contador de equipos registrados
+            $event->increment('registered_teams_count');
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Proyecto creado e inscrito al evento exitosamente',
+                'project_id' => $projectId
+            ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -84,18 +221,160 @@ class ProyectoController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
+            'repository_url' => 'nullable|url',
+            'demo_url' => 'nullable|url',
         ]);
 
         $user = Auth::user();
         $proyecto = Project::with('team')->findOrFail($id);
 
-        if ($proyecto->team->leader_id !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'Solo el líder puede editar'], 403);
+        if (!$proyecto->team->isLeader($user->id)) {
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede editar el proyecto'], 403);
         }
 
         try {
-            $proyecto->update(['title' => $request->title, 'description' => $request->description]);
-            return response()->json(['success' => true, 'message' => 'Actualizado']);
+            $proyecto->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'repository_url' => $request->repository_url,
+                'demo_url' => $request->demo_url,
+            ]);
+            
+            return response()->json(['success' => true, 'message' => 'Proyecto actualizado exitosamente']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function assignAdvisor(Request $request, $id)
+    {
+        if (!Schema::hasColumn('projects', 'advisor_id')) {
+            return response()->json(['success' => false, 'message' => 'Función no disponible: ejecuta la migración advisor_id'], 422);
+        }
+
+        $request->validate([
+            'advisor_id' => 'required|exists:users,id',
+        ]);
+
+        $user = Auth::user();
+        $proyecto = Project::with('team')->findOrFail($id);
+
+        // Verificar que el usuario es líder del equipo
+        if (!$proyecto->team->isLeader($user->id)) {
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede asignar asesor'], 403);
+        }
+
+        // Verificar que el asesor no tenga ya un proyecto en este evento
+        $asesorOcupado = Project::where('event_id', $proyecto->event_id)
+            ->where('advisor_id', $request->advisor_id)
+            ->where('id', '!=', $proyecto->id)
+            ->exists();
+
+        if ($asesorOcupado) {
+            return response()->json(['success' => false, 'message' => 'Este asesor ya tiene un proyecto en este evento'], 422);
+        }
+
+        try {
+            $proyecto->update(['advisor_id' => $request->advisor_id]);
+            
+            return response()->json(['success' => true, 'message' => 'Asesor asignado exitosamente']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function submitFile(Request $request, $id)
+    {
+        $request->validate([
+            'submission_file' => 'required|file|mimes:pdf,zip,rar,docx,pptx|max:51200', // 50MB máximo
+        ]);
+
+        $user = Auth::user();
+        $proyecto = Project::with('team')->findOrFail($id);
+
+        // Verificar que el usuario es líder del equipo
+        if (!$proyecto->team->isLeader($user->id)) {
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede entregar el proyecto'], 403);
+        }
+
+        // Verificar que el proyecto no esté ya entregado
+        if ($proyecto->status === 'submitted') {
+            return response()->json(['success' => false, 'message' => 'El proyecto ya ha sido entregado. Elimina la entrega anterior para subir una nueva.'], 422);
+        }
+
+        try {
+            // Guardar archivo
+            $file = $request->file('submission_file');
+            $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('submissions', $fileName, 'public');
+
+            // Actualizar proyecto
+            $proyecto->update([
+                'submission_file_path' => $filePath,
+                'submission_file_name' => $file->getClientOriginalName(),
+                'submitted_at' => now(),
+                'status' => 'submitted',
+            ]);
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Proyecto entregado exitosamente',
+                'file_name' => $file->getClientOriginalName()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function downloadSubmission($id)
+    {
+        $user = Auth::user();
+        $proyecto = Project::with('team')->findOrFail($id);
+
+        // Verificar que el usuario es miembro del equipo
+        if (!$proyecto->team->isMember($user->id)) {
+            abort(403, 'No tienes permiso para descargar este archivo');
+        }
+
+        if (!$proyecto->submission_file_path) {
+            abort(404, 'No hay archivo de entrega');
+        }
+
+        return Storage::disk('public')->download($proyecto->submission_file_path, $proyecto->submission_file_name);
+    }
+
+    public function deleteSubmission($id)
+    {
+        $user = Auth::user();
+        $proyecto = Project::with('team')->findOrFail($id);
+
+        // Verificar que el usuario es líder del equipo
+        if (!$proyecto->team->isLeader($user->id)) {
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede eliminar la entrega'], 403);
+        }
+
+        // Verificar que el proyecto no esté evaluado
+        if ($proyecto->status === 'evaluated') {
+            return response()->json(['success' => false, 'message' => 'No se puede eliminar la entrega de un proyecto evaluado'], 422);
+        }
+
+        try {
+            // Eliminar archivo
+            if ($proyecto->submission_file_path) {
+                Storage::disk('public')->delete($proyecto->submission_file_path);
+            }
+
+            // Actualizar proyecto
+            $proyecto->update([
+                'submission_file_path' => null,
+                'submission_file_name' => null,
+                'submitted_at' => null,
+                'status' => 'in_progress',
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Entrega eliminada exitosamente']);
+
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
@@ -104,16 +383,39 @@ class ProyectoController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        $proyecto = Project::with('team')->findOrFail($id);
+        $proyecto = Project::with('team', 'event')->findOrFail($id);
 
-        if ($proyecto->team->leader_id !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'Solo el líder puede eliminar'], 403);
+        if (!$proyecto->team->isLeader($user->id)) {
+            return response()->json(['success' => false, 'message' => 'Solo el líder puede eliminar el proyecto'], 403);
         }
 
         try {
+            DB::beginTransaction();
+
+            // Eliminar archivo de entrega si existe
+            if ($proyecto->submission_file_path) {
+                Storage::disk('public')->delete($proyecto->submission_file_path);
+            }
+
+            // Eliminar registro de evento
+            DB::table('event_registrations')
+                ->where('team_id', $proyecto->team_id)
+                ->where('event_id', $proyecto->event_id)
+                ->delete();
+
+            // Decrementar contador
+            if ($proyecto->event) {
+                $proyecto->event->decrement('registered_teams_count');
+            }
+
+            // Eliminar proyecto
             $proyecto->delete();
-            return response()->json(['success' => true, 'message' => 'Eliminado']);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Proyecto eliminado exitosamente']);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }

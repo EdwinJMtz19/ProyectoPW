@@ -95,9 +95,9 @@ class EquipoController extends Controller
             abort(403, 'No tienes permiso para ver este equipo');
         }
 
-        // Obtener eventos donde el equipo participa
+        // Obtener eventos donde el equipo participa - CORREGIDO: especificar tabla en WHERE
         $eventosParticipados = DB::table('event_registrations')
-            ->where('team_id', $id)
+            ->where('event_registrations.team_id', $id)
             ->join('events', 'event_registrations.event_id', '=', 'events.id')
             ->join('projects', 'event_registrations.project_id', '=', 'projects.id')
             ->select(
@@ -109,12 +109,12 @@ class EquipoController extends Controller
             ->orderBy('event_registrations.registered_at', 'desc')
             ->get();
 
-        // Obtener solicitudes pendientes si es líder
+        // Obtener solicitudes pendientes si es líder - CORREGIDO: especificar tabla en WHERE
         $solicitudesPendientes = [];
         if ($equipo->isLeader($user->id)) {
             $solicitudesPendientes = DB::table('join_requests')
-                ->where('team_id', $id)
-                ->where('status', 'pending')
+                ->where('join_requests.team_id', $id)
+                ->where('join_requests.status', 'pending')
                 ->join('users', 'join_requests.user_id', '=', 'users.id')
                 ->select('join_requests.*', 'users.name', 'users.email', 'users.career', 'users.semester')
                 ->orderBy('join_requests.created_at', 'desc')

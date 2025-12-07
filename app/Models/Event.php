@@ -112,6 +112,16 @@ class Event extends Model
         return $this->hasMany(EventJudge::class, 'event_id');
     }
 
+    /**
+     * Relación con los asesores asignados al evento
+     */
+    public function advisors()
+    {
+        return $this->belongsToMany(User::class, 'event_advisors', 'event_id', 'advisor_id')
+            ->withPivot('status', 'assigned_at', 'assigned_by', 'notes')
+            ->withTimestamps();
+    }
+
     // Scopes
     public function scopePublished($query)
     {

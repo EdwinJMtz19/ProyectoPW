@@ -94,10 +94,31 @@ Route::middleware('auth')->group(function () {
     // ADMIN
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        
+        // EVENTOS
         Route::get('/eventos', [AdminController::class, 'eventos'])->name('eventos');
+        Route::post('/eventos', [AdminController::class, 'crearEvento'])->name('eventos.crear');
+        Route::get('/eventos/{id}', [AdminController::class, 'verEvento'])->name('eventos.ver');
+        Route::put('/eventos/{id}', [AdminController::class, 'actualizarEvento'])->name('eventos.actualizar');
+        Route::delete('/eventos/{id}', [AdminController::class, 'eliminarEvento'])->name('eventos.eliminar');
+        Route::post('/eventos/{id}/asignar-jueces', [AdminController::class, 'asignarJueces'])->name('eventos.asignar-jueces');
+        Route::post('/eventos/{id}/asignar-asesores', [AdminController::class, 'asignarAsesores'])->name('eventos.asignar-asesores');
+        
+        // EQUIPOS
         Route::get('/equipos', [AdminController::class, 'equipos'])->name('equipos');
+        Route::delete('/equipos/{id}', [AdminController::class, 'eliminarEquipo'])->name('equipos.eliminar');
+        
+        // RANKINGS
         Route::get('/rankings', [AdminController::class, 'rankings'])->name('rankings');
+        
+        // ADMINISTRACIÓN
         Route::get('/administracion', [AdminController::class, 'administracion'])->name('administracion');
+        Route::put('/administracion/usuarios/{id}', [AdminController::class, 'actualizarUsuario'])->name('administracion.actualizar-usuario');
+        Route::delete('/administracion/usuarios/{id}', [AdminController::class, 'eliminarUsuario'])->name('administracion.eliminar-usuario');
+        
+        // PERFIL
         Route::get('/perfil', [AdminController::class, 'perfil'])->name('perfil');
+        Route::put('/perfil', [AdminController::class, 'actualizarPerfil'])->name('perfil.actualizar');
+        Route::put('/perfil/password', [AdminController::class, 'actualizarPassword'])->name('perfil.actualizar-password');
     });
 });

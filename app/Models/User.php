@@ -64,6 +64,14 @@ class User extends Authenticatable
         return $this->hasMany(Project::class, 'advisor_id');
     }
 
+    /**
+     * Relación con proyectos (alias para compatibilidad)
+     */
+    public function projects()
+    {
+        return $this->hasMany(Project::class, 'advisor_id');
+    }
+
     public function invitations()
     {
         return $this->hasMany(TeamInvitation::class, 'invited_user_id');

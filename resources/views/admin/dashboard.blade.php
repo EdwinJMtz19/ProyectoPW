@@ -14,12 +14,12 @@
     <!-- Tarjetas de Estadísticas -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <!-- Total Eventos -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100">
+        <a href="{{ route('admin.eventos') }}" class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Total Eventos</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">4</p>
-                    <p class="text-sm text-green-600 font-medium">+25% vs mes anterior</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalEventos }}</p>
+                    <p class="text-sm text-green-600 font-medium">Eventos activos</p>
                 </div>
                 <div class="bg-blue-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,15 +27,15 @@
                     </svg>
                 </div>
             </div>
-        </div>
+        </a>
 
         <!-- Total Equipos -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100">
+        <a href="{{ route('admin.equipos') }}" class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Total Equipos</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">50</p>
-                    <p class="text-sm text-green-600 font-medium">+18% vs mes anterior</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalEquipos }}</p>
+                    <p class="text-sm text-green-600 font-medium">Equipos registrados</p>
                 </div>
                 <div class="bg-purple-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,14 +43,15 @@
                     </svg>
                 </div>
             </div>
-        </div>
+        </a>
 
         <!-- Total Proyectos -->
         <div class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Total Proyectos</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">36</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalProyectos }}</p>
+                    <p class="text-sm text-gray-500 font-medium">Proyectos en plataforma</p>
                 </div>
                 <div class="bg-green-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,11 +62,12 @@
         </div>
 
         <!-- Evaluaciones -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100">
+        <a href="{{ route('admin.rankings') }}" class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-500 mb-2">Evaluaciones</p>
-                    <p class="text-4xl font-bold text-gray-900 mb-1">121</p>
+                    <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalEvaluaciones }}</p>
+                    <p class="text-sm text-gray-500 font-medium">Evaluaciones completadas</p>
                 </div>
                 <div class="bg-orange-50 p-3 rounded-xl">
                     <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +75,7 @@
                     </svg>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Contenido Principal: Actividad General y Eventos Recientes -->
@@ -101,7 +103,7 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Crear Evento -->
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <a href="{{ route('admin.eventos') }}" class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300">
                         <div class="flex items-start justify-between mb-4">
                             <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,10 +113,10 @@
                         </div>
                         <h3 class="text-xl font-bold mb-2">Crear Evento</h3>
                         <p class="text-blue-100 text-sm">Configura un nuevo evento académico</p>
-                    </div>
+                    </a>
 
                     <!-- Gestionar Usuarios -->
-                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <a href="{{ route('admin.administracion') }}" class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300">
                         <div class="flex items-start justify-between mb-4">
                             <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,10 +126,10 @@
                         </div>
                         <h3 class="text-xl font-bold mb-2">Gestionar Usuarios</h3>
                         <p class="text-purple-100 text-sm">Administra roles y permisos</p>
-                    </div>
+                    </a>
 
-                    <!-- Ver Reportes -->
-                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <!-- Ver Rankings -->
+                    <a href="{{ route('admin.rankings') }}" class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300">
                         <div class="flex items-start justify-between mb-4">
                             <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,12 +137,12 @@
                                 </svg>
                             </div>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">Ver Reportes</h3>
+                        <h3 class="text-xl font-bold mb-2">Ver Rankings</h3>
                         <p class="text-green-100 text-sm">Estadísticas y análisis detallados</p>
-                    </div>
+                    </a>
 
                     <!-- Configuración -->
-                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <a href="{{ route('admin.perfil') }}" class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300">
                         <div class="flex items-start justify-between mb-4">
                             <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +153,7 @@
                         </div>
                         <h3 class="text-xl font-bold mb-2">Configuración</h3>
                         <p class="text-orange-100 text-sm">Ajustes del sistema</p>
-                    </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -163,74 +165,41 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-6">Eventos Recientes</h2>
                 
                 <div class="space-y-4">
-                    <!-- Evento 1 -->
-                    <div class="flex gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+                    @forelse($eventosRecientes as $evento)
+                    <a href="{{ route('admin.eventos.ver', $evento->id) }}" class="flex gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span class="text-xl">🏆</span>
+                            <div class="w-12 h-12 bg-{{ $evento->status === 'in_progress' ? 'green' : ($evento->status === 'open' ? 'blue' : 'gray') }}-100 rounded-lg flex items-center justify-center">
+                                <span class="text-xl">
+                                    @if($evento->category === 'Tecnología')
+                                        🏆
+                                    @elseif($evento->category === 'Ciencias')
+                                        🔬
+                                    @elseif($evento->category === 'Negocios')
+                                        💼
+                                    @else
+                                        🤖
+                                    @endif
+                                </span>
                             </div>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 mb-1">Hackathon de Innovación 2024</p>
+                            <p class="text-sm font-semibold text-gray-900 mb-1">{{ Str::limit($evento->title, 40) }}</p>
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">Activo</span>
-                                <p class="text-xs text-gray-500">24 equipos inscritos</p>
+                                <span class="px-2 py-0.5 bg-{{ $evento->status === 'in_progress' ? 'green' : ($evento->status === 'open' ? 'blue' : 'gray') }}-100 text-{{ $evento->status === 'in_progress' ? 'green' : ($evento->status === 'open' ? 'blue' : 'gray') }}-700 text-xs font-medium rounded">
+                                    {{ $evento->getStatusLabel() }}
+                                </span>
+                                <p class="text-xs text-gray-500">{{ $evento->teams_count }} equipos</p>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Evento 2 -->
-                    <div class="flex gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span class="text-xl">🔬</span>
-                            </div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 mb-1">Feria de Ciencias 2024</p>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">Próximo</span>
-                                <p class="text-xs text-gray-500">18 equipos inscritos</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Evento 3 -->
-                    <div class="flex gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="text-xl">🤖</span>
-                            </div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 mb-1">Concurso de Robótica</p>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium rounded">Finalizado</span>
-                                <p class="text-xs text-gray-500">32 equipos inscritos</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Evento 4 -->
-                    <div class="flex gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <span class="text-xl">💼</span>
-                            </div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 mb-1">Expo Emprendedores</p>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">Próximo</span>
-                                <p class="text-xs text-gray-500">45 equipos inscritos</p>
-                            </div>
-                        </div>
-                    </div>
+                    </a>
+                    @empty
+                    <p class="text-gray-500 text-sm text-center py-4">No hay eventos recientes</p>
+                    @endforelse
                 </div>
 
-                <button class="w-full mt-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-xl transition-colors border border-gray-200">
+                <a href="{{ route('admin.eventos') }}" class="w-full mt-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-xl transition-colors border border-gray-200 flex items-center justify-center">
                     Ver todos los eventos
-                </button>
+                </a>
             </div>
 
             <!-- Actividad Reciente del Sistema -->
@@ -238,45 +207,19 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-6">Actividad Reciente</h2>
                 
                 <div class="space-y-4">
+                    @forelse($actividadReciente as $actividad)
                     <div class="flex gap-3 items-start">
                         <div class="flex-shrink-0 mt-1">
-                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <div class="w-2 h-2 bg-{{ $actividad['color'] }}-500 rounded-full"></div>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-900 font-medium">Nuevo equipo registrado</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Tech Innovators - Hace 15 min</p>
+                            <p class="text-sm text-gray-900 font-medium">{{ $actividad['mensaje'] }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ $actividad['tiempo'] }}</p>
                         </div>
                     </div>
-
-                    <div class="flex gap-3 items-start">
-                        <div class="flex-shrink-0 mt-1">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-900 font-medium">Proyecto evaluado</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Sistema IoT Casa - Hace 1 hora</p>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 items-start">
-                        <div class="flex-shrink-0 mt-1">
-                            <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-900 font-medium">Usuario nuevo registrado</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Juan Pérez - Hace 2 horas</p>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 items-start">
-                        <div class="flex-shrink-0 mt-1">
-                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-900 font-medium">Evento actualizado</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Hackathon 2024 - Hace 3 horas</p>
-                        </div>
-                    </div>
+                    @empty
+                    <p class="text-gray-500 text-sm text-center py-4">No hay actividad reciente</p>
+                    @endforelse
                 </div>
             </div>
         </div>

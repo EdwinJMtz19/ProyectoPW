@@ -35,41 +35,22 @@ class EventoController extends Controller
             });
         }
 
-        // Separar eventos por estado
-        // PRÓXIMOS: status = 'upcoming' o eventos cuya fecha de inicio es futura
+        // Separar eventos por estado - basándonos principalmente en el status
+        // PRÓXIMOS: todos los eventos con status 'upcoming'
         $eventosProximos = (clone $baseQuery)
-            ->where(function($q) {
-                $q->where('status', 'upcoming')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('event_start_date', '>', now())
-                           ->whereIn('status', ['open', 'draft']);
-                  });
-            })
+            ->where('status', 'upcoming')
             ->orderBy('event_start_date', 'asc')
             ->get();
 
-        // ACTIVOS: status = 'in_progress' o eventos que están en curso
+        // ACTIVOS: todos los eventos con status 'in_progress'
         $eventosActivos = (clone $baseQuery)
-            ->where(function($q) {
-                $q->where('status', 'in_progress')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('event_start_date', '<=', now())
-                           ->where('event_end_date', '>=', now())
-                           ->where('status', '!=', 'finished');
-                  });
-            })
+            ->where('status', 'in_progress')
             ->orderBy('event_start_date', 'desc')
             ->get();
 
-        // TERMINADOS: status = 'finished' o eventos cuya fecha final ya pasó
+        // TERMINADOS: todos los eventos con status 'finished'
         $eventosTerminados = (clone $baseQuery)
-            ->where(function($q) {
-                $q->where('status', 'finished')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('event_end_date', '<', now())
-                           ->where('status', '!=', 'in_progress');
-                  });
-            })
+            ->where('status', 'finished')
             ->orderBy('event_end_date', 'desc')
             ->get();
 

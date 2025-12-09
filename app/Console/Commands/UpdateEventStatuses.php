@@ -36,18 +36,22 @@ class UpdateEventStatuses extends Command
 
     private function determineStatus($event, $now)
     {
+        $nowDate = $now->copy()->startOfDay();
+        $eventStart = Carbon::parse($event->event_start_date)->startOfDay();
+        $eventEnd = Carbon::parse($event->event_end_date)->endOfDay();
+        
         // Si el evento ya terminó
-        if ($now->greaterThan($event->event_end_date)) {
+        if ($nowDate->greaterThan($eventEnd)) {
             return 'finished';
         }
 
         // Si el evento está en curso
-        if ($now->between($event->event_start_date, $event->event_end_date)) {
+        if ($nowDate->between($eventStart, $eventEnd)) {
             return 'in_progress';
         }
 
-        // Si estamos en período de inscripciones (antes del inicio del evento)
-        if ($now->lessThan($event->event_start_date)) {
+        // Si estamos antes del inicio del evento
+        if ($nowDate->lessThan($eventStart)) {
             return 'upcoming';
         }
 

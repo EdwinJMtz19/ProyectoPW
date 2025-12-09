@@ -152,8 +152,15 @@ class Event extends Model
     public function isRegistrationOpen()
     {
         $now = now();
+        $regStart = $this->registration_start_date ? \Carbon\Carbon::parse($this->registration_start_date)->startOfDay() : null;
+        $regEnd = $this->registration_end_date ? \Carbon\Carbon::parse($this->registration_end_date)->endOfDay() : null;
+        
+        if (!$regStart || !$regEnd) {
+            return false;
+        }
+        
         // Solo se puede registrar si es "upcoming" Y está en el período de inscripciones
-        return $this->status === 'upcoming' && $now->between($this->registration_start_date, $this->registration_end_date);
+        return $this->status === 'upcoming' && $now->between($regStart, $regEnd);
     }
 
     public function canRegister()

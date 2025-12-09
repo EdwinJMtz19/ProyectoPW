@@ -52,29 +52,6 @@
                 <div class="prose max-w-none">
                     <p class="text-gray-700 leading-relaxed"><?php echo e($proyecto->description); ?></p>
                 </div>
-
-                <?php if($proyecto->repository_url || $proyecto->demo_url): ?>
-                <div class="flex gap-4 mt-6 pt-6 border-t border-gray-200">
-                    <?php if($proyecto->repository_url): ?>
-                    <a href="<?php echo e($proyecto->repository_url); ?>" target="_blank" 
-                       class="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                        </svg>
-                        Repositorio
-                    </a>
-                    <?php endif; ?>
-                    <?php if($proyecto->demo_url): ?>
-                    <a href="<?php echo e($proyecto->demo_url); ?>" target="_blank" 
-                       class="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                        Demo
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <?php endif; ?>
             </div>
 
             <!-- Estado del Proyecto -->
@@ -99,6 +76,27 @@
                         </span>
                     </div>
                 </div>
+
+                <?php if($proyecto->status === 'evaluated' && $proyecto->final_score): ?>
+                    <!-- Proyecto Evaluado - Mostrar Calificación -->
+                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-6 mb-6">
+                        <div class="text-center mb-4">
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mb-4">
+                                <span class="text-4xl font-bold text-white"><?php echo e(number_format($proyecto->final_score, 1)); ?></span>
+                            </div>
+                            <p class="text-lg font-bold text-purple-900">Calificación Final</p>
+                            <?php if($proyecto->evaluated_at): ?>
+                                <p class="text-sm text-purple-700">Evaluado el <?php echo e($proyecto->evaluated_at->format('d/m/Y')); ?></p>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <!-- Botón Descargar Constancia -->
+                        <a href="<?php echo e(route('estudiante.proyectos.descargar-constancia', $proyecto->id)); ?>" 
+                           class="block w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            🎓 Descargar Constancia de Participación
+                        </a>
+                    </div>
+                <?php endif; ?>
 
                 <?php if($proyecto->submission_file_path): ?>
                     <!-- Archivo entregado -->
@@ -319,18 +317,6 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Descripción *</label>
                 <textarea name="description" rows="5" required
                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"><?php echo e($proyecto->description); ?></textarea>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">URL del Repositorio</label>
-                <input type="url" name="repository_url" value="<?php echo e($proyecto->repository_url); ?>"
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">URL de la Demo</label>
-                <input type="url" name="demo_url" value="<?php echo e($proyecto->demo_url); ?>"
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div class="flex gap-3 pt-4">

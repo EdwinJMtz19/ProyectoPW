@@ -62,21 +62,38 @@ class ProyectoController extends Controller
             abort(403, 'No tienes permiso para ver este proyecto');
         }
         
-        // Obtener asesores disponibles (que no tengan proyecto en este evento)
+        // Obtener asesores disponibles (asignados al evento y que no estén ocupados)
         $asesoresDisponibles = collect();
         
         if (Schema::hasColumn('projects', 'advisor_id')) {
-            $asesoresDisponibles = User::where(function($query) {
-                    $query->where('role', 'asesor')
-                          ->orWhere('user_type', 'maestro')
-                          ->orWhere('user_type', 'asesor');
-                })
-                ->whereDoesntHave('advisedProjects', function($q) use ($proyecto) {
-                    $q->where('event_id', $proyecto->event_id)
-                      ->where('id', '!=', $proyecto->id);
-                })
-                ->orderBy('name', 'asc')
-                ->get();
+            // 1. Obtener asesores asignados a ESTE evento específico
+            $asesoresDelEvento = DB::table('event_advisors')
+                ->where('event_id', $proyecto->event_id)
+                ->where('status', 'active')
+                ->pluck('advisor_id');
+            
+            // Si no hay asesores asignados al evento, mostrar todos disponibles
+            if ($asesoresDelEvento->count() > 0) {
+                // 2. De esos asesores, filtrar los que NO tienen proyectos asignados en este evento
+                $asesoresDisponibles = User::whereIn('id', $asesoresDelEvento)
+                    ->whereDoesntHave('advisedProjects', function($q) use ($proyecto) {
+                        $q->where('event_id', $proyecto->event_id);
+                    })
+                    ->orderBy('name', 'asc')
+                    ->get();
+            } else {
+                // Si no hay asesores asignados, mostrar todos los asesores del sistema
+                $asesoresDisponibles = User::where(function($query) {
+                        $query->where('role', 'asesor')
+                              ->orWhere('user_type', 'maestro')
+                              ->orWhere('user_type', 'asesor');
+                    })
+                    ->whereDoesntHave('advisedProjects', function($q) use ($proyecto) {
+                        $q->where('event_id', $proyecto->event_id);
+                    })
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
         }
         
         // Verificar si el usuario es líder
@@ -244,10 +261,43 @@ class ProyectoController extends Controller
         ]);
 
         $user = Auth::user();
-        $proyecto = Project::with('team')->findOrFail($id);
+        $proyecto = Project::with('team', 'event')->findOrFail($id);
 
         if (!$proyecto->team->isLeader($user->id)) {
             return response()->json(['success' => false, 'message' => 'Solo el líder puede solicitar asesor'], 403);
+        }
+
+        // Verificar que el asesor está asignado al evento
+        $asesorAsignadoAlEvento = DB::table('event_advisors')
+            ->where('event_id', $proyecto->event_id)
+            ->where('advisor_id', $request->advisor_id)
+            ->where('status', 'active')
+            ->exists();
+
+        // Si hay asesores asignados al evento, validar que el asesor esté en la lista
+        $hayAsesoresAsignados = DB::table('event_advisors')
+            ->where('event_id', $proyecto->event_id)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($hayAsesoresAsignados && !$asesorAsignadoAlEvento) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Este asesor no está asignado al evento. Solo puedes solicitar asesores asignados por el administrador.'
+            ], 422);
+        }
+
+        // Verificar que el asesor no tiene otro proyecto en este evento
+        $asesorOcupado = Project::where('event_id', $proyecto->event_id)
+            ->where('advisor_id', $request->advisor_id)
+            ->where('id', '!=', $proyecto->id)
+            ->exists();
+
+        if ($asesorOcupado) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Este asesor ya está asignado a otro proyecto en este evento'
+            ], 422);
         }
 
         $solicitudExistente = DB::table('advisor_requests')
@@ -505,5 +555,128 @@ class ProyectoController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Descargar constancia de participación (solo para proyectos evaluados)
+     */
+    public function descargarConstancia($id)
+    {
+        $user = Auth::user();
+        $proyecto = Project::with(['team.members', 'team.leader', 'event', 'advisor'])->findOrFail($id);
+
+        if (!$proyecto->team->isMember($user->id)) {
+            abort(403, 'No tienes permiso para descargar esta constancia');
+        }
+
+        if ($proyecto->status !== 'evaluated' || !$proyecto->final_score) {
+            abort(403, 'Solo se puede descargar la constancia de proyectos evaluados');
+        }
+
+        $html = $this->generarHTMLConstancia($proyecto, $user);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+        $pdf->setPaper('letter', 'landscape');
+
+        $fileName = 'Constancia_' . Str::slug($proyecto->title) . '_' . Str::slug($user->name) . '.pdf';
+
+        return $pdf->download($fileName);
+    }
+
+    private function generarHTMLConstancia($proyecto, $usuario)
+    {
+        $fecha = now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+        $fechaEvento = Carbon::parse($proyecto->event->event_start_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+        $fechaEval = $proyecto->evaluated_at ? Carbon::parse($proyecto->evaluated_at)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') : 'N/A';
+
+        return '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { margin: 20px; size: letter landscape; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: "Times New Roman", serif; padding: 15px; }
+        .cert { border: 8px double #1e40af; padding: 20px 30px; background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%); position: relative; }
+        .corner { position: absolute; width: 45px; height: 45px; border: 2px solid #3b82f6; }
+        .tl { top: 6px; left: 6px; border-right:none; border-bottom:none; }
+        .tr { top: 6px; right: 6px; border-left:none; border-bottom:none; }
+        .bl { bottom: 6px; left: 6px; border-right:none; border-top:none; }
+        .br { bottom: 6px; right: 6px; border-left:none; border-top:none; }
+        .header { text-align:center; margin-bottom:10px; padding-bottom:8px; border-bottom: 2px solid #1e40af; }
+        .inst { font-size:12px; font-weight:bold; color:#1e293b; line-height:1.3; margin:2px 0; }
+        .title { font-size:36px; font-weight:bold; color:#1e40af; margin:10px 0; letter-spacing:3px; }
+        .content { text-align:center; margin:8px 0; }
+        .otorga { font-size:12px; color:#334155; margin:4px 0; line-height:1.3; }
+        .name { font-size:26px; font-weight:bold; color:#1e293b; margin:8px 0; border-bottom: 2px solid #3b82f6; padding-bottom:3px; display:inline-block; }
+        .desc { font-size:11px; color:#334155; margin:8px 0; line-height:1.4; text-align:center; padding:0 40px; }
+        .tbl { width:85%; margin:10px auto; border-collapse:collapse; font-size:10px; }
+        .tbl td { padding:4px 10px; border: 1px solid #cbd5e1; }
+        .lbl { font-weight:bold; color:#1e40af; background:#f1f5f9; width:25%; }
+        .val { color:#334155; }
+        .score { font-size:16px; font-weight:bold; color:#059669; }
+        .footer { margin-top:12px; text-align:center; }
+        .date { font-size:10px; color:#475569; margin-bottom:12px; line-height:1.3; }
+        .sigs { display:table; width:100%; margin-top:8px; }
+        .sig { display:table-cell; text-align:center; width:50%; padding:0 10px; }
+        .firma-img { width:110px; height:45px; margin:0 auto 3px; }
+        .line { border-top: 2px solid #1e293b; margin:0 12px 3px 12px; }
+        .sname { font-weight:bold; font-size:9px; color:#1e293b; margin:2px 0; }
+        .stitle { font-size:8px; color:#475569; }
+    </style>
+</head>
+<body>
+    <div class="cert">
+        <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+        <div class="header">
+            <div class="inst">TECNOLÓGICO NACIONAL DE MÉXICO</div>
+            <div class="inst">INSTITUTO TECNOLÓGICO DE OAXACA</div>
+            <div class="inst" style="font-size:10px; font-weight:normal;">Coordinación General Académica y de Innovación</div>
+        </div>
+        <div class="title">CONSTANCIA</div>
+        <div class="content">
+            <div class="otorga">El Tecnológico Nacional de México a través del<br>Instituto Tecnológico de Oaxaca otorga la presente</div>
+            <div class="otorga" style="margin-top:8px;">A:</div>
+            <div class="name">' . strtoupper($usuario->name) . '</div>
+            <div class="desc">Por haber participado en el evento <strong>' . $proyecto->event->title . '</strong>, llevado a cabo el ' . $fechaEvento . ', presentando el proyecto <strong>' . $proyecto->title . '</strong> como integrante del equipo <strong>' . $proyecto->team->name . '</strong>.</div>
+        </div>
+        <table class="tbl">
+            <tr><td class="lbl">Evento:</td><td class="val">' . $proyecto->event->title . '</td></tr>
+            <tr><td class="lbl">Proyecto:</td><td class="val">' . $proyecto->title . '</td></tr>
+            <tr><td class="lbl">Equipo:</td><td class="val">' . $proyecto->team->name . ' (Líder: ' . $proyecto->team->leader->name . ')</td></tr>
+            <tr><td class="lbl">Asesor:</td><td class="val">' . ($proyecto->advisor ? $proyecto->advisor->name : 'No asignado') . '</td></tr>
+            <tr><td class="lbl">Calificación Final:</td><td class="val"><span class="score">' . number_format($proyecto->final_score, 1) . ' / 100</span></td></tr>
+        </table>
+        <div class="footer">
+            <div class="date"><strong>ATENTAMENTE</strong><br>“Piensa y Trabaja”<br>Oaxaca de Juárez, Oaxaca, ' . $fecha . '</div>
+            <div class="sigs">
+                <div class="sig">
+                    <svg class="firma-img" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 15 50 Q 25 30, 35 50 Q 45 65, 55 45 Q 65 30, 75 50" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <path d="M 80 35 Q 90 25, 100 40 Q 110 55, 120 35" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <path d="M 125 45 L 135 35 L 145 50 L 155 30" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <circle cx="170" cy="40" r="12" stroke="#1e40af" stroke-width="2.5" fill="none"/>
+                        <path d="M 163 40 L 177 40" stroke="#1e40af" stroke-width="2"/>
+                    </svg>
+                    <div class="line"></div>
+                    <div class="sname">Dr. Carlos Iván Moreno Arellano</div>
+                    <div class="stitle">Coordinador General Académico y de Innovación</div>
+                </div>
+                <div class="sig">
+                    <svg class="firma-img" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 20 45 Q 30 25, 40 45 Q 50 60, 60 40 Q 70 25, 80 45" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <path d="M 85 30 Q 95 50, 105 35 Q 115 20, 125 40" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <path d="M 130 40 L 145 40 M 137.5 30 L 137.5 50" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 150 35 Q 160 45, 170 30 Q 180 45, 190 35" stroke="#1e40af" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    </svg>
+                    <div class="line"></div>
+                    <div class="sname">Dr. Ricardo Villanueva Lomelí</div>
+                    <div class="stitle">Rector General</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
     }
 }

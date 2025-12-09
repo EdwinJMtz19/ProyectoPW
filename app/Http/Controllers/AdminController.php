@@ -106,14 +106,15 @@ class AdminController extends Controller
         ]);
 
         // Determinar el status basado en las fechas
-        $now = now();
-        $status = 'upcoming'; // Por defecto
+        $now = now()->startOfDay();
+        $eventStart = \Carbon\Carbon::parse($request->event_start_date)->startOfDay();
+        $eventEnd = \Carbon\Carbon::parse($request->event_end_date)->endOfDay();
         
-        if ($now->greaterThan($request->event_end_date)) {
+        if ($now->greaterThan($eventEnd)) {
             $status = 'finished';
-        } elseif ($now->between($request->event_start_date, $request->event_end_date)) {
+        } elseif ($now->between($eventStart, $eventEnd)) {
             $status = 'in_progress';
-        } elseif ($now->lessThan($request->event_start_date)) {
+        } else {
             $status = 'upcoming';
         }
 
@@ -176,14 +177,15 @@ class AdminController extends Controller
         ]);
 
         // Recalcular el status basado en las nuevas fechas
-        $now = now();
-        $status = 'upcoming';
+        $now = now()->startOfDay();
+        $eventStart = \Carbon\Carbon::parse($request->event_start_date)->startOfDay();
+        $eventEnd = \Carbon\Carbon::parse($request->event_end_date)->endOfDay();
         
-        if ($now->greaterThan($request->event_end_date)) {
+        if ($now->greaterThan($eventEnd)) {
             $status = 'finished';
-        } elseif ($now->between($request->event_start_date, $request->event_end_date)) {
+        } elseif ($now->between($eventStart, $eventEnd)) {
             $status = 'in_progress';
-        } elseif ($now->lessThan($request->event_start_date)) {
+        } else {
             $status = 'upcoming';
         }
 

@@ -29,18 +29,23 @@ class AsesorController extends Controller
         
         // Contar estadísticas
         $equiposCount = $equipos->count();
-        $proyectosCount = $misProyectos->where('status', '!=', 'completed')->count();
+        $proyectosCount = $misProyectos->filter(function($proyecto) {
+            return $proyecto->status !== 'completed';
+        })->count();
         
         // Obtener EVENTOS donde tiene equipos asignados
         $eventosConEquipos = Event::whereIn('id', $misProyectos->pluck('event_id'))
             ->where(function($query) {
                 $query->where('status', 'upcoming')
-                      ->orWhere('status', 'open');
+                      ->orWhere('status', 'ongoing');
             })
             ->count();
         
-        // Solicitudes pendientes
-        $solicitudesPendientes = 0;
+        // Solicitudes pendientes de asesoría
+        $solicitudesPendientes = DB::table('advisor_requests')
+            ->where('advisor_id', $user->id)
+            ->where('status', 'pending')
+            ->count();
         
         return view('asesor.dashboard', compact(
             'equiposCount',
@@ -66,11 +71,17 @@ class AsesorController extends Controller
             ->orderBy('event_start_date', 'desc')
             ->get();
         
-        // Contar eventos por estado
+        // Contar eventos por estado usando filter
         $todosCount = $eventos->count();
-        $activosCount = $eventos->where('status', 'open')->count();
-        $proximosCount = $eventos->where('status', 'upcoming')->count();
-        $finalizadosCount = $eventos->where('status', 'finished')->count();
+        $activosCount = $eventos->filter(function($evento) {
+            return $evento->status === 'ongoing';
+        })->count();
+        $proximosCount = $eventos->filter(function($evento) {
+            return $evento->status === 'upcoming';
+        })->count();
+        $finalizadosCount = $eventos->filter(function($evento) {
+            return $evento->status === 'completed';
+        })->count();
         
         return view('asesor.eventos', compact(
             'eventos',
@@ -117,29 +128,28 @@ class AsesorController extends Controller
         // Extraer equipos únicos
         $equipos = $proyectos->pluck('team')->unique('id')->filter();
         
-        // SOLICITUDES PENDIENTES
+        // Obtener SOLICITUDES PENDIENTES (equipos que me solicitan)
         $solicitudesPendientes = DB::table('advisor_requests')
+            ->join('teams', 'advisor_requests.team_id', '=', 'teams.id')
+            ->join('projects', 'advisor_requests.project_id', '=', 'projects.id')
+            ->join('events', 'projects.event_id', '=', 'events.id')
+            ->join('users', 'advisor_requests.requested_by', '=', 'users.id')
             ->where('advisor_requests.advisor_id', $user->id)
             ->where('advisor_requests.status', 'pending')
-            ->join('projects', 'advisor_requests.project_id', '=', 'projects.id')
-            ->join('teams', 'advisor_requests.team_id', '=', 'teams.id')
-            ->join('users', 'advisor_requests.requested_by', '=', 'users.id')
-            ->join('events', 'projects.event_id', '=', 'events.id')
+            ->where('advisor_requests.requested_by', '!=', $user->id) // Solo solicitudes de estudiantes
             ->select(
                 'advisor_requests.*',
-                'projects.title as project_title',
                 'teams.name as team_name',
-                'users.name as requester_name',
-                'events.title as event_title'
+                'events.title as event_title',
+                'users.name as requester_name'
             )
-            ->orderBy('advisor_requests.created_at', 'desc')
             ->get();
         
         return view('asesor.equipos', compact('equipos', 'proyectos', 'solicitudesPendientes'));
     }
 
     /**
-     * Mostrar equipos disponibles (sin asesor)
+     * Mostrar equipos disponibles (sin asesor) - NUEVA FUNCIÓN
      */
     public function equiposDisponibles()
     {
@@ -150,13 +160,19 @@ class AsesorController extends Controller
             ->with(['team.members', 'event'])
             ->get();
         
-        $misSolicitudesEnviadas = [];
+        // Obtener solicitudes que el asesor ha enviado
+        $misSolicitudesEnviadas = DB::table('advisor_requests')
+            ->where('advisor_id', $user->id)
+            ->where('requested_by', $user->id) // Solicitudes enviadas por el asesor
+            ->whereIn('status', ['pending'])
+            ->pluck('project_id')
+            ->toArray();
         
         return view('asesor.equipos-disponibles', compact('proyectosDisponibles', 'misSolicitudesEnviadas'));
     }
     
     /**
-     * Solicitar asesorar a un equipo
+     * Solicitar asesorar a un equipo - NUEVA FUNCIÓN
      */
     public function solicitarAsesorar(Request $request, $projectId)
     {
@@ -169,9 +185,30 @@ class AsesorController extends Controller
             return redirect()->back()->with('error', 'Este equipo ya tiene un asesor asignado');
         }
         
-        // Asignar directamente (sin sistema de solicitudes)
-        $proyecto->advisor_id = $user->id;
-        $proyecto->save();
+        // Verificar que no haya solicitado antes
+        $solicitudExistente = DB::table('advisor_requests')
+            ->where('project_id', $projectId)
+            ->where('advisor_id', $user->id)
+            ->where('requested_by', $user->id)
+            ->where('status', 'pending')
+            ->exists();
+        
+        if ($solicitudExistente) {
+            return redirect()->back()->with('error', 'Ya enviaste una solicitud a este equipo');
+        }
+        
+        // Crear solicitud (asesor solicita al equipo)
+        DB::table('advisor_requests')->insert([
+            'id' => \Illuminate\Support\Str::uuid(),
+            'team_id' => $proyecto->team_id,
+            'project_id' => $projectId,
+            'advisor_id' => $user->id,
+            'requested_by' => $user->id, // El asesor solicita
+            'status' => 'pending',
+            'message' => $request->input('mensaje', 'Me gustaría ser su asesor en este proyecto'),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
         
         // Notificar al líder del equipo
         $lider = DB::table('team_members')
@@ -181,116 +218,94 @@ class AsesorController extends Controller
         
         if ($lider) {
             Notification::create([
-                'id' => \Illuminate\Support\Str::uuid(),
                 'user_id' => $lider->user_id,
-                'type' => 'advisor_assigned',
-                'title' => 'Asesor Asignado',
-                'message' => $user->name . ' ahora es su asesor',
-                'data' => json_encode(['team_id' => $proyecto->team_id]),
-                'is_read' => false,
+                'type' => 'advisor_request',
+                'title' => 'Solicitud de Asesoría',
+                'message' => $user->name . ' quiere ser su asesor',
+                'data' => json_encode(['team_id' => $proyecto->team_id])
             ]);
         }
         
-        return redirect()->back()->with('success', 'Ahora eres asesor de este equipo');
+        return redirect()->back()->with('success', 'Solicitud enviada al equipo correctamente');
     }
 
     /**
      * Aceptar solicitud de asesoría
      */
-    public function aceptarSolicitud(Request $request, $id)
+    public function aceptarSolicitud(Request $request, $solicitudId)
     {
         $user = Auth::user();
         
         $solicitud = DB::table('advisor_requests')
-            ->where('id', $id)
-            ->where('advisor_requests.advisor_id', $user->id)
-            ->where('advisor_requests.status', 'pending')
+            ->where('id', $solicitudId)
+            ->where('advisor_id', $user->id)
+            ->where('status', 'pending')
             ->first();
         
         if (!$solicitud) {
             return redirect()->back()->with('error', 'Solicitud no encontrada');
         }
         
-        try {
-            DB::beginTransaction();
-            
-            // Actualizar solicitud
-            DB::table('advisor_requests')
-                ->where('id', $id)
-                ->update([
-                    'status' => 'accepted',
-                    'response_message' => $request->input('mensaje', 'Solicitud aceptada'),
-                    'responded_at' => now(),
-                    'updated_at' => now()
-                ]);
-            
-            // Asignar asesor al proyecto
-            Project::where('id', $solicitud->project_id)
-                ->update(['advisor_id' => $user->id]);
-            
-            // Notificar al estudiante
-            \App\Models\Notification::create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'user_id' => $solicitud->requested_by,
-                'type' => 'advisor_accepted',
-                'title' => '¡Solicitud Aceptada!',
-                'message' => $user->name . ' aceptó ser tu asesor',
-                'data' => json_encode(['project_id' => $solicitud->project_id]),
-                'is_read' => false,
+        // Actualizar solicitud
+        DB::table('advisor_requests')
+            ->where('id', $solicitudId)
+            ->update([
+                'status' => 'accepted',
+                'response_message' => $request->input('mensaje', 'Solicitud aceptada'),
+                'responded_at' => now(),
+                'updated_at' => now()
             ]);
-            
-            DB::commit();
-            
-            return redirect()->back()->with('success', 'Solicitud aceptada. Ahora eres asesor de este proyecto.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        
+        // Asignar asesor al proyecto
+        Project::where('id', $solicitud->project_id)
+            ->update(['advisor_id' => $user->id]);
+        
+        // Crear notificación para el equipo
+        $teamMembers = DB::table('team_members')
+            ->where('team_id', $solicitud->team_id)
+            ->pluck('user_id');
+        
+        foreach ($teamMembers as $memberId) {
+            Notification::create([
+                'user_id' => $memberId,
+                'type' => 'advisor_accepted',
+                'title' => '¡Asesor asignado!',
+                'message' => $user->name . ' aceptó ser su asesor',
+                'data' => json_encode(['team_id' => $solicitud->team_id])
+            ]);
         }
+        
+        return redirect()->back()->with('success', 'Solicitud aceptada correctamente');
     }
 
     /**
      * Rechazar solicitud de asesoría
      */
-    public function rechazarSolicitud(Request $request, $id)
+    public function rechazarSolicitud(Request $request, $solicitudId)
     {
         $user = Auth::user();
         
         $solicitud = DB::table('advisor_requests')
-            ->where('id', $id)
-            ->where('advisor_requests.advisor_id', $user->id)
-            ->where('advisor_requests.status', 'pending')
+            ->where('id', $solicitudId)
+            ->where('advisor_id', $user->id)
+            ->where('status', 'pending')
             ->first();
         
         if (!$solicitud) {
             return redirect()->back()->with('error', 'Solicitud no encontrada');
         }
         
-        try {
-            // Actualizar solicitud
-            DB::table('advisor_requests')
-                ->where('id', $id)
-                ->update([
-                    'status' => 'rejected',
-                    'response_message' => $request->input('mensaje', 'Solicitud rechazada'),
-                    'responded_at' => now(),
-                    'updated_at' => now()
-                ]);
-            
-            // Notificar al estudiante
-            \App\Models\Notification::create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'user_id' => $solicitud->requested_by,
-                'type' => 'advisor_rejected',
-                'title' => 'Solicitud Rechazada',
-                'message' => $user->name . ' rechazó tu solicitud de asesoría',
-                'data' => json_encode(['project_id' => $solicitud->project_id]),
-                'is_read' => false,
+        // Actualizar solicitud
+        DB::table('advisor_requests')
+            ->where('id', $solicitudId)
+            ->update([
+                'status' => 'rejected',
+                'response_message' => $request->input('mensaje', 'Solicitud rechazada'),
+                'responded_at' => now(),
+                'updated_at' => now()
             ]);
-            
-            return redirect()->back()->with('success', 'Solicitud rechazada');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
-        }
+        
+        return redirect()->back()->with('success', 'Solicitud rechazada');
     }
 
     /**
@@ -305,33 +320,20 @@ class AsesorController extends Controller
             ->with(['team.members', 'event'])
             ->get();
         
-        // SOLICITUDES PENDIENTES
-        $solicitudesPendientes = DB::table('advisor_requests')
-            ->where('advisor_requests.advisor_id', $user->id)
-            ->where('advisor_requests.status', 'pending')
-            ->join('projects', 'advisor_requests.project_id', '=', 'projects.id')
-            ->join('teams', 'advisor_requests.team_id', '=', 'teams.id')
-            ->join('users', 'advisor_requests.requested_by', '=', 'users.id')
-            ->join('events', 'projects.event_id', '=', 'events.id')
-            ->select(
-                'advisor_requests.*',
-                'projects.title as project_title',
-                'teams.name as team_name',
-                'users.name as requester_name',
-                'events.title as event_title'
-            )
-            ->orderBy('advisor_requests.created_at', 'desc')
-            ->get();
-        
-        // Contar proyectos por estado
+        // Contar proyectos por estado correctamente usando filter
         $todosCount = $proyectos->count();
-        $enProgresoCount = $proyectos->whereIn('status', ['draft', 'in_progress'])->count();
-        $entregadosCount = $proyectos->where('status', 'submitted')->count();
-        $evaluadosCount = $proyectos->where('status', 'evaluated')->count();
+        $enProgresoCount = $proyectos->filter(function($proyecto) {
+            return in_array($proyecto->status, ['draft', 'in_progress']);
+        })->count();
+        $entregadosCount = $proyectos->filter(function($proyecto) {
+            return $proyecto->status === 'submitted';
+        })->count();
+        $evaluadosCount = $proyectos->filter(function($proyecto) {
+            return $proyecto->status === 'evaluated';
+        })->count();
         
         return view('asesor.proyectos', compact(
             'proyectos',
-            'solicitudesPendientes',
             'todosCount',
             'enProgresoCount',
             'entregadosCount',

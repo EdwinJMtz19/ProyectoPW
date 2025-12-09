@@ -94,9 +94,36 @@
                         
                         <!-- Botón Descargar Constancia -->
                         <a href="{{ route('estudiante.proyectos.descargar-constancia', $proyecto->id) }}" 
-                           class="block w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                           class="block w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mb-3">
                             🎓 Descargar Constancia de Participación
                         </a>
+                        
+                        @php
+                        // Obtener la posición del proyecto en el ranking del evento
+                        $posicion = DB::table('projects')
+                            ->where('event_id', $proyecto->event_id)
+                            ->where('status', 'evaluated')
+                            ->whereNotNull('final_score')
+                            ->where('final_score', '>', $proyecto->final_score)
+                            ->count() + 1;
+                        @endphp
+                        
+                        @if($posicion <= 3)
+                            <!-- Botón Reconocimiento para Ganadores -->
+                            @php
+                            $reconocimientoInfo = [
+                                1 => ['color' => 'yellow-500', 'text' => '🥇 1er Lugar', 'gradient' => 'from-yellow-400 to-yellow-600'],
+                                2 => ['color' => 'gray-400', 'text' => '🥈 2do Lugar', 'gradient' => 'from-gray-300 to-gray-500'],
+                                3 => ['color' => 'orange-600', 'text' => '🥉 3er Lugar', 'gradient' => 'from-orange-400 to-orange-600'],
+                            ];
+                            $reconocimiento = $reconocimientoInfo[$posicion];
+                            @endphp
+                            
+                            <a href="{{ route('estudiante.proyectos.descargar-reconocimiento', $proyecto->id) }}" 
+                               class="block w-full py-3 px-4 bg-gradient-to-r {{ $reconocimiento['gradient'] }} text-white text-center rounded-lg hover:opacity-90 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                {{ $reconocimiento['text'] }} - Descargar Reconocimiento
+                            </a>
+                        @endif
                     </div>
                 @endif
 

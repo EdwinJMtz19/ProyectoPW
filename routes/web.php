@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/proyectos/{id}/download-submission', [ProyectoController::class, 'downloadSubmission'])->name('proyectos.download-submission');
         Route::delete('/proyectos/{id}/delete-submission', [ProyectoController::class, 'deleteSubmission'])->name('proyectos.delete-submission');
         Route::get('/proyectos/{id}/descargar-constancia', [ProyectoController::class, 'descargarConstancia'])->name('proyectos.descargar-constancia');
+        Route::get('/proyectos/{id}/descargar-reconocimiento', [ProyectoController::class, 'descargarReconocimiento'])->name('proyectos.descargar-reconocimiento');
         
         // Rutas genéricas al final
         Route::get('/proyectos/{id}', [ProyectoController::class, 'show'])->name('proyectos.show');

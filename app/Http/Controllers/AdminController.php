@@ -105,6 +105,18 @@ class AdminController extends Controller
             'is_online' => 'boolean',
         ]);
 
+        // Determinar el status basado en las fechas
+        $now = now();
+        $status = 'upcoming'; // Por defecto
+        
+        if ($now->greaterThan($request->event_end_date)) {
+            $status = 'finished';
+        } elseif ($now->between($request->event_start_date, $request->event_end_date)) {
+            $status = 'in_progress';
+        } elseif ($now->lessThan($request->event_start_date)) {
+            $status = 'upcoming';
+        }
+
         $evento = Event::create([
             'id' => (string) Str::uuid(),
             'title' => $request->title,
@@ -113,7 +125,7 @@ class AdminController extends Controller
             'short_description' => Str::limit($request->description, 200),
             'category' => $request->category,
             'event_type' => $request->event_type ?? 'competition',
-            'status' => 'open',
+            'status' => $status,
             'registration_start_date' => $request->registration_start_date,
             'registration_end_date' => $request->registration_end_date,
             'event_start_date' => $request->event_start_date,
@@ -163,12 +175,25 @@ class AdminController extends Controller
             'is_online' => 'boolean',
         ]);
 
+        // Recalcular el status basado en las nuevas fechas
+        $now = now();
+        $status = 'upcoming';
+        
+        if ($now->greaterThan($request->event_end_date)) {
+            $status = 'finished';
+        } elseif ($now->between($request->event_start_date, $request->event_end_date)) {
+            $status = 'in_progress';
+        } elseif ($now->lessThan($request->event_start_date)) {
+            $status = 'upcoming';
+        }
+
         $evento->update([
             'title' => $request->title,
             'slug' => Str::slug($request->title),
             'description' => $request->description,
             'short_description' => Str::limit($request->description, 200),
             'category' => $request->category,
+            'status' => $status,
             'registration_start_date' => $request->registration_start_date,
             'registration_end_date' => $request->registration_end_date,
             'event_start_date' => $request->event_start_date,

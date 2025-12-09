@@ -16,28 +16,73 @@ class EventoController extends Controller
 {
     public function index(Request $request)
     {
-        // SOLO EVENTOS PRÓXIMAMENTE (upcoming) - No activos ni finalizados
-        $query = Event::where('is_published', true)
-                      ->where('status', 'upcoming');
+        // Obtener el tab actual (por defecto: próximos)
+        $tab = $request->get('tab', 'proximos');
+        
+        // Base query: solo eventos publicados
+        $baseQuery = Event::where('is_published', true);
 
+        // Filtrar por categoría si se especifica
         if ($request->filled('category') && $request->category !== 'all') {
-            $query->where('category', $request->category);
+            $baseQuery->where('category', $request->category);
         }
 
+        // Filtrar por búsqueda si se especifica
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
+            $baseQuery->where(function($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
                   ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
-        $eventos = $query->orderBy('event_start_date', 'asc')->get();
+        // Separar eventos por estado
+        // PRÓXIMOS: status = 'upcoming' o eventos cuya fecha de inicio es futura
+        $eventosProximos = (clone $baseQuery)
+            ->where(function($q) {
+                $q->where('status', 'upcoming')
+                  ->orWhere(function($subQ) {
+                      $subQ->where('event_start_date', '>', now())
+                           ->whereIn('status', ['open', 'draft']);
+                  });
+            })
+            ->orderBy('event_start_date', 'asc')
+            ->get();
 
+        // ACTIVOS: status = 'in_progress' o eventos que están en curso
+        $eventosActivos = (clone $baseQuery)
+            ->where(function($q) {
+                $q->where('status', 'in_progress')
+                  ->orWhere(function($subQ) {
+                      $subQ->where('event_start_date', '<=', now())
+                           ->where('event_end_date', '>=', now())
+                           ->where('status', '!=', 'finished');
+                  });
+            })
+            ->orderBy('event_start_date', 'desc')
+            ->get();
+
+        // TERMINADOS: status = 'finished' o eventos cuya fecha final ya pasó
+        $eventosTerminados = (clone $baseQuery)
+            ->where(function($q) {
+                $q->where('status', 'finished')
+                  ->orWhere(function($subQ) {
+                      $subQ->where('event_end_date', '<', now())
+                           ->where('status', '!=', 'in_progress');
+                  });
+            })
+            ->orderBy('event_end_date', 'desc')
+            ->get();
+
+        // Si es una petición AJAX, devolver JSON con los tres arrays
         if ($request->ajax()) {
-            return response()->json($eventos);
+            return response()->json([
+                'proximos' => $eventosProximos,
+                'activos' => $eventosActivos,
+                'terminados' => $eventosTerminados,
+            ]);
         }
 
-        return view('estudiante.eventos', compact('eventos'));
+        return view('estudiante.eventos', compact('eventosProximos', 'eventosActivos', 'eventosTerminados', 'tab'));
     }
 
     public function show($id)

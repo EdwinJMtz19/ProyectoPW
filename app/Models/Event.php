@@ -152,7 +152,14 @@ class Event extends Model
     public function isRegistrationOpen()
     {
         $now = now();
-        return $now->between($this->registration_start_date, $this->registration_end_date);
+        // Solo se puede registrar si es "upcoming" Y está en el período de inscripciones
+        return $this->status === 'upcoming' && $now->between($this->registration_start_date, $this->registration_end_date);
+    }
+
+    public function canRegister()
+    {
+        // Alias más claro para saber si se puede inscribir
+        return $this->isRegistrationOpen();
     }
 
     public function isInProgress()

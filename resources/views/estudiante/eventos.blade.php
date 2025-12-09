@@ -7,17 +7,37 @@
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-4xl font-bold text-gray-900 mb-2">Eventos Disponibles</h1>
-        <p class="text-gray-600 text-lg">Explora y participa en concursos académicos próximos</p>
+        <p class="text-gray-600 text-lg">Explora y participa en concursos académicos</p>
     </div>
 
-    <!-- Info sobre filtrado automático -->
-    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-        <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <div>
-            <p class="text-sm font-medium text-blue-900">Solo se muestran eventos próximos</p>
-            <p class="text-sm text-blue-700">Puedes inscribirte únicamente a eventos que aún no han iniciado</p>
+    <!-- Tabs de navegación -->
+    <div class="mb-8">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button onclick="cambiarTab('proximos')" id="tab-proximos" 
+                    class="tab-button border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap border-gray-900 text-gray-900">
+                    Próximos
+                    <span class="ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium bg-gray-900 text-white" id="count-proximos">
+                        {{ $eventosProximos->count() }}
+                    </span>
+                </button>
+                
+                <button onclick="cambiarTab('activos')" id="tab-activos"
+                    class="tab-button border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Activos
+                    <span class="ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700" id="count-activos">
+                        {{ $eventosActivos->count() }}
+                    </span>
+                </button>
+                
+                <button onclick="cambiarTab('terminados')" id="tab-terminados"
+                    class="tab-button border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Terminados
+                    <span class="ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700" id="count-terminados">
+                        {{ $eventosTerminados->count() }}
+                    </span>
+                </button>
+            </nav>
         </div>
     </div>
 
@@ -44,106 +64,143 @@
         </select>
     </div>
 
-    <!-- Contador de eventos -->
-    <div class="mb-6">
-        <p class="text-sm text-gray-600">
-            <span class="font-semibold text-gray-900" id="event-count">{{ $eventos->count() }}</span> 
-            {{ $eventos->count() == 1 ? 'evento disponible' : 'eventos disponibles' }}
-        </p>
+    <!-- PRÓXIMOS -->
+    <div id="content-proximos" class="tab-content">
+        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+            <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="text-sm font-medium text-blue-900">Eventos próximos</p>
+                <p class="text-sm text-blue-700">Puedes inscribirte a estos eventos que aún no han iniciado</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-proximos">
+            @forelse($eventosProximos as $evento)
+                @include('estudiante.partials.evento-card', ['evento' => $evento, 'tipo' => 'proximo'])
+            @empty
+                <div class="col-span-full text-center py-20">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">No hay eventos próximos</h3>
+                    <p class="text-gray-600">No se encontraron eventos próximos en este momento</p>
+                </div>
+            @endforelse
+        </div>
     </div>
 
-    <!-- Grid de eventos -->
-    <div id="eventos-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @forelse($eventos as $evento)
-            <div class="evento-card bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-200" 
-                 data-category="{{ $evento->category }}">
-                
-                <!-- Imagen del evento -->
-                <div class="relative h-48">
-                    @if($evento->cover_image_url)
-                        <img src="{{ $evento->cover_image_url }}" alt="{{ $evento->title }}" class="w-full h-full object-cover">
-                    @else
-                        <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                    @endif
-                    
-                    <!-- Badge de categoría -->
-                    <div class="absolute top-4 right-4">
-                        <span class="px-3 py-1 bg-white text-gray-900 text-xs font-medium rounded border border-gray-200 shadow-sm">
-                            {{ $evento->category }}
-                        </span>
-                    </div>
+    <!-- ACTIVOS -->
+    <div id="content-activos" class="tab-content hidden">
+        <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+            <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <div>
+                <p class="text-sm font-medium text-green-900">Eventos en curso</p>
+                <p class="text-sm text-green-700">Estos eventos ya iniciaron y están activos actualmente</p>
+            </div>
+        </div>
 
-                    <!-- Badge de próximamente -->
-                    <div class="absolute top-4 left-4">
-                        <span class="px-3 py-1 bg-gray-900 text-white text-xs font-medium rounded shadow-sm">
-                            Próximamente
-                        </span>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-activos">
+            @forelse($eventosActivos as $evento)
+                @include('estudiante.partials.evento-card', ['evento' => $evento, 'tipo' => 'activo'])
+            @empty
+                <div class="col-span-full text-center py-20">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                     </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">No hay eventos activos</h3>
+                    <p class="text-gray-600">No hay eventos en curso en este momento</p>
                 </div>
-                
-                <!-- Contenido -->
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{{ $evento->title }}</h3>
-                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ $evento->short_description ?? Str::limit($evento->description, 100) }}</p>
-                    
-                    <!-- Info del evento -->
-                    <div class="space-y-2.5 mb-5 text-sm text-gray-600">
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <span class="text-gray-700">{{ \Carbon\Carbon::parse($evento->event_start_date)->format('d M Y') }}</span>
-                        </div>
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            <span class="text-gray-700">{{ $evento->registered_teams_count ?? 0 }} equipos inscritos</span>
-                        </div>
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
-                            <span class="text-gray-700">{{ $evento->min_team_size }}-{{ $evento->max_team_size }} integrantes</span>
-                        </div>
+            @endforelse
+        </div>
+    </div>
+
+    <!-- TERMINADOS -->
+    <div id="content-terminados" class="tab-content hidden">
+        <div class="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start gap-3">
+            <svg class="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="text-sm font-medium text-gray-900">Eventos finalizados</p>
+                <p class="text-sm text-gray-700">Estos eventos ya concluyeron, puedes ver los resultados</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-terminados">
+            @forelse($eventosTerminados as $evento)
+                @include('estudiante.partials.evento-card', ['evento' => $evento, 'tipo' => 'terminado'])
+            @empty
+                <div class="col-span-full text-center py-20">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path>
+                        </svg>
                     </div>
-                    
-                    <!-- Botón -->
-                    <a href="{{ route('estudiante.evento-detalle', $evento->id) }}" 
-                       class="block w-full py-2.5 px-4 bg-gray-900 text-white text-center rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm">
-                        Ver detalles
-                    </a>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">No hay eventos terminados</h3>
+                    <p class="text-gray-600">No se encontraron eventos finalizados</p>
                 </div>
-            </div>
-        @empty
-            <div class="col-span-full text-center py-20">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
-                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">No hay eventos disponibles</h3>
-                <p class="text-gray-600">No se encontraron eventos próximos en este momento</p>
-            </div>
-        @endforelse
+            @endforelse
+        </div>
     </div>
 </div>
 
 <script>
+let tabActual = 'proximos';
+
+function cambiarTab(tab) {
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Mostrar el contenido seleccionado
+    document.getElementById('content-' + tab).classList.remove('hidden');
+    
+    // Actualizar estilos de los botones
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('border-gray-900', 'text-gray-900');
+        button.classList.add('border-transparent', 'text-gray-500');
+        
+        // Actualizar badge
+        const badge = button.querySelector('span');
+        badge.classList.remove('bg-gray-900', 'text-white');
+        badge.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    // Activar el botón seleccionado
+    const activeButton = document.getElementById('tab-' + tab);
+    activeButton.classList.remove('border-transparent', 'text-gray-500');
+    activeButton.classList.add('border-gray-900', 'text-gray-900');
+    
+    // Actualizar badge activo
+    const activeBadge = activeButton.querySelector('span');
+    activeBadge.classList.remove('bg-gray-200', 'text-gray-700');
+    activeBadge.classList.add('bg-gray-900', 'text-white');
+    
+    tabActual = tab;
+    
+    // Aplicar filtros al nuevo tab
+    filtrarEventos();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const categoryFilter = document.getElementById('categoryFilter');
-    const allCards = document.querySelectorAll('.evento-card');
-    const eventCount = document.getElementById('event-count');
     
     let currentCategory = 'all';
     let currentSearch = '';
     
     function filtrarEventos() {
+        const grid = document.getElementById('grid-' + tabActual);
+        const allCards = grid.querySelectorAll('.evento-card');
         let visibleCount = 0;
         
         allCards.forEach(card => {
@@ -161,10 +218,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Actualizar contador
-        eventCount.textContent = visibleCount;
-        const countText = visibleCount == 1 ? 'evento disponible' : 'eventos disponibles';
-        eventCount.parentElement.innerHTML = `<span class="font-semibold text-gray-900" id="event-count">${visibleCount}</span> ${countText}`;
+        // Actualizar contador del tab actual
+        const countBadge = document.getElementById('count-' + tabActual);
+        countBadge.textContent = visibleCount;
     }
     
     searchInput.addEventListener('input', function() {
@@ -176,6 +232,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentCategory = this.value;
         filtrarEventos();
     });
+    
+    // Exponer la función globalmente
+    window.filtrarEventos = filtrarEventos;
 });
 </script>
 @endsection

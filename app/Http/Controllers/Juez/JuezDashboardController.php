@@ -174,7 +174,7 @@ class JuezDashboardController extends Controller
 
         // Evaluaciones según filtro
         if ($filter === 'pending') {
-            $evaluations = Project::with(['team.leader', 'event'])
+            $evaluations = Project::with(['team.leader', 'event', 'advisor'])
                 ->whereHas('event', function($query) {
                     $query->where('status', 'in_progress');
                 })
@@ -187,16 +187,66 @@ class JuezDashboardController extends Controller
                 ->paginate(10);
 
             $isPending = true;
-        } else {
-            $query = Evaluation::with(['project.team.leader', 'project.event', 'scores.criterion'])
-                ->where('judge_id', $userId);
-
-            if ($filter === 'completed') {
-                $query->where('status', 'completed');
-            }
+        } elseif ($filter === 'completed') {
+            $query = Evaluation::with(['project.team.leader', 'project.event', 'project.advisor', 'scores.criterion'])
+                ->where('judge_id', $userId)
+                ->where('status', 'completed');
 
             $evaluations = $query->latest('completed_at')->paginate(10);
             $isPending = false;
+        } else {
+            // Para "all", obtenemos tanto pendientes como completadas
+            // Obtenemos proyectos pendientes
+            $pendingProjects = Project::with(['team.leader', 'event', 'advisor'])
+                ->whereHas('event', function($query) {
+                    $query->where('status', 'in_progress');
+                })
+                ->whereDoesntHave('evaluations', function($query) use ($userId) {
+                    $query->where('judge_id', $userId)
+                          ->where('status', 'completed');
+                })
+                ->where('status', 'submitted')
+                ->latest()
+                ->get()
+                ->map(function($project) {
+                    $project->item_type = 'pending';
+                    $project->sort_date = $project->updated_at;
+                    return $project;
+                });
+
+            // Obtenemos evaluaciones completadas
+            $completedEvaluations = Evaluation::with(['project.team.leader', 'project.event', 'project.advisor', 'scores.criterion'])
+                ->where('judge_id', $userId)
+                ->where('status', 'completed')
+                ->latest('completed_at')
+                ->get()
+                ->map(function($evaluation) {
+                    $evaluation->item_type = 'completed';
+                    $evaluation->sort_date = $evaluation->completed_at;
+                    return $evaluation;
+                });
+
+            // Combinar y ordenar por fecha
+            $allItems = $pendingProjects->concat($completedEvaluations)
+                ->sortByDesc('sort_date')
+                ->values();
+
+            // Paginación manual
+            $perPage = 10;
+            $currentPage = request()->get('page', 1);
+            $offset = ($currentPage - 1) * $perPage;
+            
+            $items = $allItems->slice($offset, $perPage)->values();
+            
+            $evaluations = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $allItems->count(),
+                $perPage,
+                $currentPage,
+                ['path' => request()->url(), 'query' => request()->query()]
+            );
+            
+            $isPending = 'mixed';
         }
 
         return view('juez.evaluaciones', compact(

@@ -21,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
     
     public function boot(): void
     {
+    // Configurar paginación para usar Tailwind
+    \Illuminate\Pagination\Paginator::useTailwind();
+    
     // Permitir autenticación con numero_control en lugar de email
     Auth::provider('custom', function ($app, array $config) {
         return new \Illuminate\Auth\EloquentUserProvider(

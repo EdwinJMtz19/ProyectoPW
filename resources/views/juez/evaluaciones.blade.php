@@ -104,7 +104,7 @@
         <!-- Lista de Evaluaciones -->
         <div class="space-y-6">
             @foreach($evaluations as $item)
-                @if($isPending)
+                @if($isPending === true || ($isPending === 'mixed' && $item->item_type === 'pending'))
                     @php
                         $project = $item;
                         $event = $project->event;
@@ -124,9 +124,14 @@
                                     <p class="text-sm text-gray-600 mb-1">
                                         <span class="font-medium">Equipo:</span> {{ $team->name }}
                                     </p>
-                                    <p class="text-sm text-gray-600">
+                                    <p class="text-sm text-gray-600 mb-1">
                                         <span class="font-medium">Evento:</span> {{ $event->title }}
                                     </p>
+                                    @if($project->advisor)
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Asesor:</span> {{ $project->advisor->name }}
+                                    </p>
+                                    @endif
                                     @if($project->description)
                                         <p class="text-sm text-gray-500 mt-2 line-clamp-2">{{ Str::limit($project->description, 120) }}</p>
                                     @endif
@@ -155,7 +160,7 @@
                             </div>
                         </div>
                     </div>
-                @else
+                @elseif($isPending === false || ($isPending === 'mixed' && $item->item_type === 'completed'))
                     @php
                         $evaluation = $item;
                         $project = $evaluation->project;
@@ -180,9 +185,14 @@
                                     <p class="text-sm text-gray-600 mb-1">
                                         <span class="font-medium">Equipo:</span> {{ $team->name }}
                                     </p>
-                                    <p class="text-sm text-gray-600">
+                                    <p class="text-sm text-gray-600 mb-1">
                                         <span class="font-medium">Evento:</span> {{ $event->title }}
                                     </p>
+                                    @if($project->advisor)
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Asesor:</span> {{ $project->advisor->name }}
+                                    </p>
+                                    @endif
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm text-gray-600 mb-1">Calificación</p>
@@ -226,9 +236,13 @@
         </div>
 
         <!-- Paginación -->
+        @if($evaluations->hasPages())
         <div class="mt-8">
-            {{ $evaluations->links() }}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4">
+                {{ $evaluations->appends(request()->query())->links() }}
+            </div>
         </div>
+        @endif
     @endif
 </div>
 @endsection

@@ -15,13 +15,13 @@
         <button onclick="filtrarEventos('todos')" id="tab-todos" class="px-4 py-3 font-semibold text-gray-900 border-b-2 border-gray-900 transition-colors">
             Todos ({{ $todosCount }})
         </button>
-        <button onclick="filtrarEventos('ongoing')" id="tab-ongoing" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
+        <button onclick="filtrarEventos('in_progress')" id="tab-in_progress" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Activos ({{ $activosCount }})
         </button>
         <button onclick="filtrarEventos('upcoming')" id="tab-upcoming" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Próximos ({{ $proximosCount }})
         </button>
-        <button onclick="filtrarEventos('completed')" id="tab-completed" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
+        <button onclick="filtrarEventos('finished')" id="tab-finished" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Finalizados ({{ $finalizadosCount }})
         </button>
     </div>
@@ -30,7 +30,7 @@
     <div id="eventos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($eventos as $evento)
         <!-- Evento {{ $loop->iteration }} -->
-        <div class="evento-card bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden group {{ $evento->status === 'completed' ? 'opacity-90' : '' }}" data-status="{{ $evento->status }}">
+        <div class="evento-card bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden group {{ $evento->status === 'finished' ? 'opacity-90' : '' }}" data-status="{{ $evento->status }}">
             <div class="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 @if($evento->cover_image_url)
                     <img src="{{ $evento->cover_image_url }}" 
@@ -44,11 +44,11 @@
                     </div>
                 @endif
                 <div class="absolute top-4 left-4">
-                    @if($evento->status === 'ongoing')
+                    @if($evento->status === 'in_progress')
                         <span class="px-3 py-1 bg-gray-900 text-white text-xs font-semibold rounded">En curso</span>
                     @elseif($evento->status === 'upcoming')
                         <span class="px-3 py-1 bg-gray-700 text-white text-xs font-semibold rounded">Próximamente</span>
-                    @elseif($evento->status === 'completed')
+                    @elseif($evento->status === 'finished')
                         <span class="px-3 py-1 bg-gray-500 text-white text-xs font-semibold rounded">Finalizado</span>
                     @else
                         <span class="px-3 py-1 bg-gray-400 text-white text-xs font-semibold rounded">{{ ucfirst($evento->status) }}</span>

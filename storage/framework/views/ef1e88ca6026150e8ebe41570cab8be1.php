@@ -13,13 +13,13 @@
         <button onclick="filtrarEventos('todos')" id="tab-todos" class="px-4 py-3 font-semibold text-gray-900 border-b-2 border-gray-900 transition-colors">
             Todos (<?php echo e($todosCount); ?>)
         </button>
-        <button onclick="filtrarEventos('ongoing')" id="tab-ongoing" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
+        <button onclick="filtrarEventos('in_progress')" id="tab-in_progress" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Activos (<?php echo e($activosCount); ?>)
         </button>
         <button onclick="filtrarEventos('upcoming')" id="tab-upcoming" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Próximos (<?php echo e($proximosCount); ?>)
         </button>
-        <button onclick="filtrarEventos('completed')" id="tab-completed" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
+        <button onclick="filtrarEventos('finished')" id="tab-finished" class="px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Finalizados (<?php echo e($finalizadosCount); ?>)
         </button>
     </div>
@@ -28,7 +28,7 @@
     <div id="eventos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <?php $__empty_1 = true; $__currentLoopData = $eventos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $evento): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
         <!-- Evento <?php echo e($loop->iteration); ?> -->
-        <div class="evento-card bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden group <?php echo e($evento->status === 'completed' ? 'opacity-90' : ''); ?>" data-status="<?php echo e($evento->status); ?>">
+        <div class="evento-card bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden group <?php echo e($evento->status === 'finished' ? 'opacity-90' : ''); ?>" data-status="<?php echo e($evento->status); ?>">
             <div class="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <?php if($evento->cover_image_url): ?>
                     <img src="<?php echo e($evento->cover_image_url); ?>" 
@@ -42,11 +42,11 @@
                     </div>
                 <?php endif; ?>
                 <div class="absolute top-4 left-4">
-                    <?php if($evento->status === 'ongoing'): ?>
+                    <?php if($evento->status === 'in_progress'): ?>
                         <span class="px-3 py-1 bg-gray-900 text-white text-xs font-semibold rounded">En curso</span>
                     <?php elseif($evento->status === 'upcoming'): ?>
                         <span class="px-3 py-1 bg-gray-700 text-white text-xs font-semibold rounded">Próximamente</span>
-                    <?php elseif($evento->status === 'completed'): ?>
+                    <?php elseif($evento->status === 'finished'): ?>
                         <span class="px-3 py-1 bg-gray-500 text-white text-xs font-semibold rounded">Finalizado</span>
                     <?php else: ?>
                         <span class="px-3 py-1 bg-gray-400 text-white text-xs font-semibold rounded"><?php echo e(ucfirst($evento->status)); ?></span>

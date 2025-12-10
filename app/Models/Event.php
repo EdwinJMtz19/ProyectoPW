@@ -198,4 +198,31 @@ class Event extends Model
             default => 'Desconocido',
         };
     }
+
+    /**
+     * Convertir URL de Google Drive a formato de imagen directa
+     */
+    public function getCoverImageUrl()
+    {
+        if (!$this->cover_image_url) {
+            return null;
+        }
+
+        $url = $this->cover_image_url;
+
+        // Detectar si es un link de Google Drive
+        if (strpos($url, 'drive.google.com') !== false) {
+            // Extraer el ID del archivo de diferentes formatos de URLs de Google Drive
+            if (preg_match('/\/file\/d\/([a-zA-Z0-9_-]+)/', $url, $matches)) {
+                $fileId = $matches[1];
+                return "https://drive.google.com/thumbnail?id={$fileId}&sz=w1000";
+            } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $url, $matches)) {
+                $fileId = $matches[1];
+                return "https://drive.google.com/thumbnail?id={$fileId}&sz=w1000";
+            }
+        }
+
+        // Si no es Google Drive o no se pudo extraer el ID, devolver la URL original
+        return $url;
+    }
 }

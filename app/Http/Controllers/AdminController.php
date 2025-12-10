@@ -97,6 +97,7 @@ class AdminController extends Controller
             'max_team_size' => 'required|integer|min:1',
             'max_teams' => 'nullable|integer|min:1',
             'location' => 'nullable|string',
+            'cover_image_url' => 'nullable|url',
             'is_online' => 'boolean',
         ]);
 
@@ -130,6 +131,7 @@ class AdminController extends Controller
             'max_team_size' => $request->max_team_size,
             'max_teams' => $request->max_teams,
             'location' => $request->location,
+            'cover_image_url' => $request->cover_image_url,
             'is_online' => $request->is_online ?? false,
             'organizer_id' => auth()->id(),
             'organizer_name' => auth()->user()->name,

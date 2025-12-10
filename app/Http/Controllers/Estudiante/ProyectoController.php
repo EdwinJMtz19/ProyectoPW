@@ -63,11 +63,14 @@ class ProyectoController extends Controller
         }
         
 
-        // Obtener comentarios del asesor
-        $comentarios = \App\Models\ProjectComment::where('project_id', $id)
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Obtener comentarios del asesor (verificar si existe la tabla)
+        $comentarios = collect();
+        if (Schema::hasTable('project_comments')) {
+            $comentarios = \App\Models\ProjectComment::where('project_id', $id)
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
         
         // Obtener asesores disponibles...
         // Obtener asesores disponibles (que no tengan proyecto en este evento)

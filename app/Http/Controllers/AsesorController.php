@@ -75,16 +75,16 @@ class AsesorController extends Controller
             ->orderBy('event_start_date', 'desc')
             ->get();
         
-        // Contar eventos por estado usando filter
+        // Contar eventos por estado
         $todosCount = $eventos->count();
         $activosCount = $eventos->filter(function($evento) {
-            return $evento->status === 'ongoing';
+            return $evento->status === 'in_progress';
         })->count();
         $proximosCount = $eventos->filter(function($evento) {
             return $evento->status === 'upcoming';
         })->count();
         $finalizadosCount = $eventos->filter(function($evento) {
-            return $evento->status === 'completed';
+            return $evento->status === 'finished';
         })->count();
         
         return view('asesor.eventos', compact(

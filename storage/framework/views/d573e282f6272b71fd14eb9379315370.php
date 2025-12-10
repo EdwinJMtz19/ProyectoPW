@@ -3,17 +3,11 @@
 <?php $__env->startSection('content'); ?>
 <div class="p-8">
     <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
+    <div class="mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Mis Equipos</h1>
             <p class="text-gray-600 mt-1">Gestiona los equipos que asesoras</p>
         </div>
-        <a href="<?php echo e(route('asesor.equipos-disponibles')); ?>" class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            Buscar Equipos
-        </a>
     </div>
 
     <?php if(session('success')): ?>

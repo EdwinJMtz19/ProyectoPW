@@ -288,6 +288,19 @@
                             <p class="text-xs text-gray-500 mt-1">Opcional</p>
                         </div>
                     </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            URL de Imagen de Portada
+                        </label>
+                        <input 
+                            type="url" 
+                            name="cover_image_url" 
+                            placeholder="https://drive.google.com/... o https://..."
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gray-900 transition-colors"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">📷 Opcional - Pega el link de Google Drive o cualquier URL de imagen</p>
+                    </div>
                 </div>
             </div>
 

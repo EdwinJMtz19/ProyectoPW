@@ -3,8 +3,8 @@
     
     <!-- Imagen del evento -->
     <div class="relative h-48">
-        <?php if($evento->cover_image_url): ?>
-            <img src="<?php echo e($evento->cover_image_url); ?>" alt="<?php echo e($evento->title); ?>" class="w-full h-full object-cover">
+        <?php if($evento->getCoverImageUrl()): ?>
+            <img src="<?php echo e($evento->getCoverImageUrl()); ?>" alt="<?php echo e($evento->title); ?>" class="w-full h-full object-cover">
         <?php else: ?>
             <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                 <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

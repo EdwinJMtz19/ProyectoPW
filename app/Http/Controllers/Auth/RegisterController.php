@@ -7,7 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use App\Mail\WelcomeMail;
 
 class RegisterController extends Controller
 {
@@ -61,6 +63,14 @@ class RegisterController extends Controller
                 'is_active' => true,
             ]);
 
+            // Enviar correo de bienvenida
+            try {
+                Mail::to($user->email)->send(new WelcomeMail($user));
+            } catch (\Exception $e) {
+                \Log::error('Error al enviar correo de bienvenida: ' . $e->getMessage());
+                // Continuar con el registro aunque falle el correo
+            }
+
             // Login automático
             Auth::login($user);
 
@@ -68,7 +78,7 @@ class RegisterController extends Controller
             $user->updateLastLogin();
 
             return redirect()->route('estudiante.dashboard')
-                           ->with('success', '¡Bienvenido a EventTec! Tu cuenta ha sido creada exitosamente.');
+                           ->with('success', '¡Bienvenido a EventTec! Tu cuenta ha sido creada exitosamente. Revisa tu correo para más información.');
 
         } catch (\Exception $e) {
             \Log::error('Error en registro: ' . $e->getMessage());

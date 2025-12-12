@@ -10,7 +10,9 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use App\Mail\TeamRegisteredMail;
 
 class EventoController extends Controller
 {
@@ -272,9 +274,27 @@ class EventoController extends Controller
 
             DB::commit();
 
+            // Enviar email de confirmación a todos los miembros del equipo
+            try {
+                $emailsEnviados = 0;
+                foreach ($team->members as $member) {
+                    if ($member->user && $member->user->email && filter_var($member->user->email, FILTER_VALIDATE_EMAIL)) {
+                        try {
+                            Mail::to($member->user->email)->send(new TeamRegisteredMail($team, $event));
+                            $emailsEnviados++;
+                        } catch (\Exception $e) {
+                            \Log::error("Error al enviar email a miembro {$member->user->email}: " . $e->getMessage());
+                        }
+                    }
+                }
+                \Log::info("Emails enviados al inscribir equipo '{$team->name}': {$emailsEnviados} de {$team->members->count()} miembros");
+            } catch (\Exception $e) {
+                \Log::error('Error general al enviar emails de registro de equipo: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Equipo inscrito al evento exitosamente',
+                'message' => 'Equipo inscrito al evento exitosamente. Se ha enviado confirmación por email.',
                 'project_id' => $projectId
             ]);
 

@@ -12,6 +12,7 @@ use App\Models\EventJudge;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\Admin\StoreEventoRequest;
 use App\Http\Requests\Admin\UpdateEventoRequest;
 use App\Http\Requests\Admin\AsignarJuecesRequest;
@@ -20,6 +21,9 @@ use App\Http\Requests\Admin\StoreUsuarioRequest;
 use App\Http\Requests\Admin\UpdateUsuarioRequest;
 use App\Http\Requests\Admin\UpdatePerfilRequest;
 use App\Http\Requests\Admin\UpdatePasswordRequest;
+use App\Mail\EventCreatedMail;
+use App\Mail\JudgeAssignedMail;
+use App\Mail\WelcomeMail;
 
 class AdminController extends Controller
 {
@@ -132,7 +136,30 @@ class AdminController extends Controller
             'is_published' => true,
         ]);
 
-        return redirect()->route('admin.eventos')->with('success', 'Evento creado exitosamente.');
+        // Enviar email a todos los estudiantes notificando del nuevo evento
+        try {
+            $estudiantes = User::where('user_type', 'estudiante')
+                ->orWhere('role', 'estudiante')
+                ->whereNotNull('email')
+                ->get();
+
+            $emailsEnviados = 0;
+            foreach ($estudiantes as $estudiante) {
+                if ($estudiante->email && filter_var($estudiante->email, FILTER_VALIDATE_EMAIL)) {
+                    try {
+                        Mail::to($estudiante->email)->send(new EventCreatedMail($evento));
+                        $emailsEnviados++;
+                    } catch (\Exception $e) {
+                        \Log::error("Error al enviar email a {$estudiante->email}: " . $e->getMessage());
+                    }
+                }
+            }
+            \Log::info("Emails enviados al crear evento '{$evento->title}': {$emailsEnviados} de {$estudiantes->count()} estudiantes");
+        } catch (\Exception $e) {
+            \Log::error('Error general al enviar emails de nuevo evento: ' . $e->getMessage());
+        }
+
+        return redirect()->route('admin.eventos')->with('success', 'Evento creado exitosamente. Se han enviado notificaciones a los estudiantes.');
     }
 
     /**
@@ -224,10 +251,20 @@ class AdminController extends Controller
                     'assigned_at' => now(),
                     'assigned_by' => auth()->id(),
                 ]);
+
+                // Enviar email al juez notificándole de su asignación
+                try {
+                    $judge = User::find($judgeId);
+                    if ($judge && $judge->email && filter_var($judge->email, FILTER_VALIDATE_EMAIL)) {
+                        Mail::to($judge->email)->send(new JudgeAssignedMail($judge, $evento));
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error al enviar email a juez {$judge->email}: " . $e->getMessage());
+                }
             }
         }
 
-        return redirect()->back()->with('success', 'Jueces asignados exitosamente.');
+        return redirect()->back()->with('success', 'Jueces asignados exitosamente. Se han enviado notificaciones por email.');
     }
 
     /**
@@ -386,7 +423,14 @@ class AdminController extends Controller
             'is_active' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Usuario creado exitosamente.');
+        // Enviar email de bienvenida al nuevo usuario
+        try {
+            Mail::to($usuario->email)->queue(new WelcomeMail($usuario));
+        } catch (\Exception $e) {
+            \Log::error('Error al enviar email de bienvenida: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Usuario creado exitosamente. Se ha enviado un correo de bienvenida.');
     }
 
     /**

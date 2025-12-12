@@ -8,8 +8,12 @@ use App\Models\Project;
 use App\Models\Evaluation;
 use App\Models\EvaluationScore;
 use App\Models\Rubric;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Mail\ProjectEvaluatedMail;
 
 class JuezDashboardController extends Controller
 {
@@ -369,10 +373,41 @@ class JuezDashboardController extends Controller
                 ->where('status', 'completed')
                 ->avg('total_score');
 
+            $wasNotEvaluated = $project->status !== 'evaluated';
+
             $project->update([
                 'final_score' => $averageScore,
                 'status' => 'evaluated',
             ]);
+
+            // Enviar email solo si es la primera vez que se marca como evaluado
+            if ($wasNotEvaluated) {
+                try {
+                    // Obtener todos los miembros del equipo
+                    $teamMembers = DB::table('team_members')
+                        ->where('team_id', $project->team_id)
+                        ->pluck('user_id');
+
+                    // Recargar el proyecto con las relaciones necesarias
+                    $project->load(['team', 'event']);
+
+                    $emailsEnviados = 0;
+                    foreach ($teamMembers as $memberId) {
+                        $member = User::find($memberId);
+                        if ($member && $member->email && filter_var($member->email, FILTER_VALIDATE_EMAIL)) {
+                            try {
+                                Mail::to($member->email)->send(new ProjectEvaluatedMail($project));
+                                $emailsEnviados++;
+                            } catch (\Exception $e) {
+                                \Log::error("Error al enviar email a {$member->email}: " . $e->getMessage());
+                            }
+                        }
+                    }
+                    \Log::info("Emails enviados por evaluación del proyecto '{$project->title}': {$emailsEnviados} de {$teamMembers->count()} miembros");
+                } catch (\Exception $e) {
+                    \Log::error('Error general al enviar emails de proyecto evaluado: ' . $e->getMessage());
+                }
+            }
         }
     }
 

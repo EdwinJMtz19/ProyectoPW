@@ -8,12 +8,16 @@ use App\Models\Project;
 use App\Models\Event;
 use App\Models\Notification;
 use App\Models\ProjectComment;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\Asesor\UpdatePerfilRequest;
 use App\Http\Requests\Asesor\UpdatePasswordRequest;
 use App\Http\Requests\Asesor\StoreComentarioRequest;
 use Illuminate\Support\Facades\Hash;
+use App\Mail\AdvisorRequestMail;
+use App\Mail\AdvisorAcceptedMail;
 
 class AsesorController extends Controller
 {
@@ -219,7 +223,7 @@ class AsesorController extends Controller
             ->where('team_id', $proyecto->team_id)
             ->where('role', 'leader')
             ->first();
-        
+
         if ($lider) {
             Notification::create([
                 'user_id' => $lider->user_id,
@@ -228,9 +232,21 @@ class AsesorController extends Controller
                 'message' => $user->name . ' quiere ser su asesor',
                 'data' => json_encode(['team_id' => $proyecto->team_id])
             ]);
+
+            // Enviar email al líder del equipo
+            try {
+                $liderUser = User::find($lider->user_id);
+                if ($liderUser && $liderUser->email && filter_var($liderUser->email, FILTER_VALIDATE_EMAIL)) {
+                    $mensaje = $request->input('mensaje', 'Me gustaría ser su asesor en este proyecto');
+                    Mail::to($liderUser->email)->send(new AdvisorRequestMail($user, $proyecto->team, $mensaje));
+                    \Log::info("Email de solicitud de asesoría enviado a {$liderUser->email}");
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error al enviar email de solicitud de asesoría: " . $e->getMessage());
+            }
         }
-        
-        return redirect()->back()->with('success', 'Solicitud enviada al equipo correctamente');
+
+        return redirect()->back()->with('success', 'Solicitud enviada al equipo correctamente. Se ha notificado por email.');
     }
 
     /**
@@ -268,7 +284,9 @@ class AsesorController extends Controller
         $teamMembers = DB::table('team_members')
             ->where('team_id', $solicitud->team_id)
             ->pluck('user_id');
-        
+
+        $team = Team::find($solicitud->team_id);
+
         foreach ($teamMembers as $memberId) {
             DB::table('notifications')->insert([
                 'id' => \Illuminate\Support\Str::uuid(),
@@ -280,9 +298,19 @@ class AsesorController extends Controller
                 'is_read' => 0,
                 'created_at' => now()->format('Y-m-d H:i:s')
             ]);
+
+            // Enviar email a cada miembro del equipo
+            try {
+                $member = User::find($memberId);
+                if ($member && $member->email && filter_var($member->email, FILTER_VALIDATE_EMAIL) && $team) {
+                    Mail::to($member->email)->send(new AdvisorAcceptedMail($user, $team));
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error al enviar email de asesor aceptado a {$member->email}: " . $e->getMessage());
+            }
         }
-        
-        return redirect()->back()->with('success', 'Solicitud aceptada correctamente');
+
+        return redirect()->back()->with('success', 'Solicitud aceptada correctamente. Se ha notificado al equipo por email.');
     }
 
     /**

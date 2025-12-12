@@ -76,6 +76,9 @@ class RegisterController extends Controller
             // IMPORTANTE: Regenerar la sesión después del login
             $request->session()->regenerate();
             
+            // FORZAR guardado de sesión antes de redirigir
+            $request->session()->save();
+            
             // Actualizar último login
             $user->updateLastLogin();
 
@@ -83,12 +86,13 @@ class RegisterController extends Controller
             \Log::info('Usuario registrado exitosamente', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'user_type' => $user->user_type
+                'user_type' => $user->user_type,
+                'session_id' => $request->session()->getId(),
+                'authenticated' => Auth::check()
             ]);
 
-            // Redirigir directamente al dashboard de estudiante con mensaje de éxito
-            return redirect()
-                ->route('estudiante.dashboard')
+            // Redirigir con URL absoluta y mensaje de éxito
+            return redirect('/estudiante/dashboard')
                 ->with('success', '¡Bienvenido a EventTec! Tu cuenta ha sido creada exitosamente.');
 
         } catch (\Exception $e) {

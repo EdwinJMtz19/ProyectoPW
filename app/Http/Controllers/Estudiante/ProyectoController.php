@@ -98,9 +98,9 @@ class ProyectoController extends Controller
             } else {
                 // Si no hay asesores asignados, mostrar todos los asesores del sistema
                 $asesoresDisponibles = User::where(function($query) {
-                        $query->where('role', 'asesor')
-                              ->orWhere('user_type', 'maestro')
-                              ->orWhere('user_type', 'asesor');
+                        $query->where('user_type', 'maestro')
+                              
+                              
                     })
                     ->whereDoesntHave('advisedProjects', function($q) use ($proyecto) {
                         $q->where('event_id', $proyecto->event_id);

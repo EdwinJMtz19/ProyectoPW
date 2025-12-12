@@ -85,9 +85,10 @@ class AdminController extends Controller
 
         $eventos = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        // Obtener jueces y asesores para asignación (usar user_type en lugar de role)
-        $jueces = User::where('user_type', 'juez')->orWhere('role', 'juez')->get();
-        $asesores = User::where('user_type', 'maestro')->orWhere('role', 'asesor')->get();
+        // Obtener jueces y asesores para asignación
+        $jueces = User::where('user_type', 'juez')->get();
+        
+        $asesores = User::where('user_type', 'maestro')->get();
 
         return view('admin.eventos', compact('eventos', 'jueces', 'asesores'));
     }
@@ -386,12 +387,7 @@ class AdminController extends Controller
         if ($role && $role !== 'all') {
             // Mapear asesor a maestro para la búsqueda
             $searchRole = $role === 'asesor' ? 'maestro' : $role;
-            $query->where(function($q) use ($role, $searchRole) {
-                $q->where('role', $role)
-                  ->orWhere('user_type', $searchRole)
-                  ->orWhere('role', $searchRole)
-                  ->orWhere('user_type', $role);
-            });
+            $query->where('user_type', $searchRole);
         }
 
         $usuarios = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -399,10 +395,10 @@ class AdminController extends Controller
         // Actividad reciente
         $actividadReciente = $this->getRecentActivity();
 
-        // Conteos por rol (considerar tanto role como user_type)
-        $totalEstudiantes = User::where('role', 'estudiante')->orWhere('user_type', 'estudiante')->count();
-        $totalJueces = User::where('role', 'juez')->orWhere('user_type', 'juez')->count();
-        $totalAsesores = User::where('role', 'asesor')->orWhere('user_type', 'maestro')->count();
+        // Conteos por rol (solo user_type)
+        $totalEstudiantes = User::where('user_type', 'estudiante')->count();
+        $totalJueces = User::where('user_type', 'juez')->count();
+        $totalAsesores = User::where('user_type', 'maestro')->count();
 
         return view('admin.administracion', compact('usuarios', 'actividadReciente', 'totalEstudiantes', 'totalJueces', 'totalAsesores'));
     }
@@ -443,8 +439,7 @@ class AdminController extends Controller
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
-            'user_type' => $request->role === 'asesor' ? 'maestro' : $request->role,
+            'user_type' => $request->user_type,
         ];
 
         $usuario->update($updateData);

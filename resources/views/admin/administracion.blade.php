@@ -82,12 +82,12 @@
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar usuarios..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all text-sm">
                     </div>
                     <div>
-                        <select name="role" onchange="this.form.submit()" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all text-sm">
+                        <select name="user_type" onchange="this.form.submit()" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all text-sm">
                             <option value="all">Todos los roles</option>
-                            <option value="estudiante" {{ request('role') == 'estudiante' ? 'selected' : '' }}>Estudiante</option>
-                            <option value="juez" {{ request('role') == 'juez' ? 'selected' : '' }}>Juez</option>
-                            <option value="asesor" {{ request('role') == 'asesor' ? 'selected' : '' }}>Asesor</option>
-                            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Administrador</option>
+                            <option value="estudiante" {{ request('user_type') == 'estudiante' ? 'selected' : '' }}>Estudiante</option>
+                            <option value="juez" {{ request('user_type') == 'juez' ? 'selected' : '' }}>Juez</option>
+                            <option value="asesor" {{ request('user_type') == 'asesor' ? 'selected' : '' }}>Asesor</option>
+                            <option value="admin" {{ request('user_type') == 'admin' ? 'selected' : '' }}>Administrador</option>
                         </select>
                     </div>
                 </div>

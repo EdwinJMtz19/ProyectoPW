@@ -443,6 +443,9 @@ class AdminController extends Controller
         ];
 
         try {
+        $user = User::findOrFail($id);
+
+
             $user->user_type = $request->input('user_type');
         $user->name = $request->input('name');
         $user->email = $request->input('email');

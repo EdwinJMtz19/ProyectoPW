@@ -122,7 +122,7 @@
                                         <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">Pendiente</span>
                                     </div>
                                     <p class="text-sm text-gray-600 mb-1">
-                                        <span class="font-medium">Equipo:</span> {{ $team->name }}
+                                        <span class="font-medium">Equipo:</span> {{ $team ? $team->name : 'Sin equipo asignado' }}
                                     </p>
                                     <p class="text-sm text-gray-600 mb-1">
                                         <span class="font-medium">Evento:</span> {{ $event->title }}

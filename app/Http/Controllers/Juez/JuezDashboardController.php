@@ -192,7 +192,13 @@ class JuezDashboardController extends Controller
 
             $isPending = true;
         } elseif ($filter === 'completed') {
-            $query = Evaluation::with(['project.team.leader', 'project.event', 'project.advisor', 'scores.criterion'])
+            $query = Evaluation::with([
+                    'project.team.leader', 
+                    'project.team', 
+                    'project.event', 
+                    'project.advisor', 
+                    'scores.criterion'
+                ])
                 ->where('judge_id', $userId)
                 ->where('status', 'completed');
 
@@ -219,7 +225,13 @@ class JuezDashboardController extends Controller
                 });
 
             // Obtenemos evaluaciones completadas
-            $completedEvaluations = Evaluation::with(['project.team.leader', 'project.event', 'project.advisor', 'scores.criterion'])
+            $completedEvaluations = Evaluation::with([
+                    'project.team.leader', 
+                    'project.team', 
+                    'project.event', 
+                    'project.advisor', 
+                    'scores.criterion'
+                ])
                 ->where('judge_id', $userId)
                 ->where('status', 'completed')
                 ->latest('completed_at')

@@ -61,6 +61,28 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Recursos del Proyecto</h2>
                 
                 <div class="space-y-3">
+                    {{-- Archivo subido por el equipo --}}
+                    @if($proyecto->submission_file)
+                    <a href="{{ route('estudiante.proyectos.download-submission', $proyecto->id) }}" class="flex items-center gap-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border-2 border-blue-200">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">Archivo del Proyecto</p>
+                            <p class="text-sm text-gray-600">{{ basename($proyecto->submission_file) }}</p>
+                            @if($proyecto->submitted_at)
+                            <p class="text-xs text-gray-500">Subido: {{ \Carbon\Carbon::parse($proyecto->submitted_at)->format('d/m/Y H:i') }}</p>
+                            @endif
+                        </div>
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    @endif
+
+                    {{-- Repositorio --}}
                     @if($proyecto->repository_url)
                     <a href="{{ $proyecto->repository_url }}" target="_blank" class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div class="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
@@ -78,6 +100,7 @@
                     </a>
                     @endif
 
+                    {{-- Demo --}}
                     @if($proyecto->demo_url)
                     <a href="{{ $proyecto->demo_url }}" target="_blank" class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -95,7 +118,8 @@
                     </a>
                     @endif
 
-                    @if(!$proyecto->repository_url && !$proyecto->demo_url)
+                    {{-- Mensaje cuando no hay recursos --}}
+                    @if(!$proyecto->submission_file && !$proyecto->repository_url && !$proyecto->demo_url)
                     <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                         <div class="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
